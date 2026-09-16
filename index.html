@@ -513,6 +513,33 @@
   }
   .sticky-note textarea::placeholder{ color:rgba(0,0,0,.35); }
 
+  /* Floating counterpart to the "Sticky note" button up in the chapter
+     header -- fixed to the viewport so it's reachable no matter how far
+     into a long chapter you've scrolled. Desktop/laptop only, same as the
+     notes themselves (see STICKY_NOTES_MIN_WIDTH) -- hidden below that
+     width by the same media query that hides #add-note-btn. */
+  .sticky-fab{
+    position:fixed;
+    right:26px;
+    bottom:26px;
+    z-index:40;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--ink-soft);
+    font-family:'Karla', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:12px 18px 12px 14px;
+    border-radius:999px;
+    cursor:pointer;
+    box-shadow:0 10px 24px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.1);
+  }
+  .sticky-fab:hover{ border-color:var(--gold); color:var(--gold); background:var(--gold-tint); }
+  .sticky-fab svg{ width:16px; height:16px; flex:none; }
+
   /* ---------- maps ---------- */
   .map-modal-overlay{
     position:fixed;
@@ -1951,7 +1978,7 @@
        a note placed on a wide screen can end up off-screen or overlapping
        other controls once the layout reflows this narrow, so the feature is
        desktop/laptop-only rather than trying to reflow note positions too. */
-    #add-note-btn, .sticky-layer{ display:none !important; }
+    #add-note-btn, .sticky-layer, .sticky-fab{ display:none !important; }
   }
 
   @media (prefers-reduced-motion: no-preference){
@@ -2005,7 +2032,7 @@
     nav.rail, header.top, footer.site,
     .reading-toolbar, .hl-bar, .chp-hint, .chapter-actions,
     .reading-resizer-track, .xref-resizer-track, .passage-study-head, .split,
-    .xref-wrap, .sticky-layer, .map-modal-overlay{
+    .xref-wrap, .sticky-layer, .map-modal-overlay, .sticky-fab{
       display:none !important;
     }
     /* Force plain black text everywhere in the printed area -- highlight
@@ -2239,6 +2266,15 @@
   <main id="main">
     <!-- populated by JS -->
   </main>
+
+  <!-- Fixed in place (not rebuilt by renderMain's innerHTML swaps) so it
+       stays reachable at any scroll position -- the whole point being you
+       shouldn't have to scroll back up to the chapter header just to drop
+       a note near whatever you're currently reading. -->
+  <button type="button" class="sticky-fab" id="sticky-fab" aria-label="Add a sticky note here" title="Add a sticky note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 4h13l3 3v13H4z"/><path d="M17 4v3h3"/></svg>
+    <span>Add sticky note</span>
+  </button>
 </div>
 
 <footer class="site">
@@ -11626,6 +11662,13 @@
     }, { passive:true });
     drawLayer.addEventListener("touchend", endMapStroke);
   }
+
+  // Lives outside #main (never rebuilt by renderMain), so bind it once here
+  // rather than re-binding on every render -- addStickyNote() itself always
+  // reads the current state.passageId, so a single listener stays correct
+  // no matter which chapter is open when it's clicked.
+  const stickyFab = document.getElementById("sticky-fab");
+  if (stickyFab) stickyFab.addEventListener("click", addStickyNote);
 
   const navGroups = document.getElementById("nav-groups");
   const mainEl = document.getElementById("main");
