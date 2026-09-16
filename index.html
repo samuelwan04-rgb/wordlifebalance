@@ -1144,6 +1144,7 @@
     padding-bottom:20px;
     border-bottom:1px solid var(--line);
   }
+  .tl-filters[hidden]{ display:none; }
   .tl-filter-row{
     display:flex;
     align-items:baseline;
@@ -1214,6 +1215,13 @@
     flex:0 0 14px;
     background:repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 3px, var(--line) 3px, var(--line) 6px);
   }
+  /* When a king/prophet/character/group filter is active, bands whose era
+     holds a matching book light up (dot always on) and the rest recede --
+     mirrors the .tl-book.match/.dim treatment on the book tiles below. */
+  .river-band.filter-match{ opacity:1; }
+  .river-band.filter-match .river-dot{ opacity:1; box-shadow:0 0 0 3px rgba(255,255,255,.22), 0 0 10px 2px rgba(255,255,255,.5); }
+  .river-band.filter-dim{ opacity:.24; }
+  .river-band.filter-dim:hover, .river-band.filter-dim:focus-visible{ opacity:.7; }
   .tl-river-caption{
     font-size:12.5px;
     color:var(--ink-soft);
@@ -1326,14 +1334,14 @@
     border-radius:0 8px 8px 0;
     padding:7px 11px;
     cursor:pointer;
-    transition:opacity .15s ease, box-shadow .15s ease;
+    transition:opacity .15s ease, box-shadow .15s ease, transform .15s ease;
   }
   .tl-era.ot .tl-book{ border-left-color:var(--gold); }
   .tl-era.nt .tl-book{ border-left-color:var(--accent); }
   .tl-book:hover{ background:var(--surface-2); }
   .tl-book.selected{ box-shadow:0 0 0 2px var(--focus); }
   .tl-book.dim{ opacity:.32; }
-  .tl-book.match{ box-shadow:0 0 0 2px var(--gold); }
+  .tl-book.match{ box-shadow:0 0 0 2px var(--gold), 0 4px 14px rgba(0,0,0,.12); transform:translateX(2px) scale(1.02); }
   .tl-book.uncertain{ border-left-style:dashed; }
   .tl-book .tl-book-name{
     display:inline-block;
@@ -10388,6 +10396,7 @@
     if (!river || !caption) return;
     const selectedBook = BOOK_TIMELINE.find(b => b.key === state.tlSelected);
     const defaultEra = selectedBook ? selectedBook.era : ERA_ORDER[0];
+    const filtersActive = FILTER_GROUPS.some(g => state.filters[g.key].size > 0);
     function paintCaption(eraKey){
       const groups = ERA_GROUPS[eraKey];
       caption.innerHTML = '<strong>' + ERA_LABEL[eraKey] + '</strong> &middot; ' + ERA_YEARS[eraKey] +
@@ -10402,11 +10411,16 @@
         river.appendChild(gap);
         return;
       }
-      const bookCount = BOOK_TIMELINE.filter(b => b.era === eraKey).length;
+      const eraBooks = BOOK_TIMELINE.filter(b => b.era === eraKey);
+      const bookCount = eraBooks.length;
       if (!bookCount) return;
+      const hasMatch = filtersActive && eraBooks.some(b => bookMatchesFilters(b) === true);
+      let cls = "river-band";
+      if (eraKey === defaultEra) cls += " active";
+      if (filtersActive) cls += hasMatch ? " filter-match" : " filter-dim";
       const band = document.createElement("button");
       band.type = "button";
-      band.className = "river-band" + (eraKey === defaultEra ? " active" : "");
+      band.className = cls;
       band.style.background = ERA_RIVER_COLOR[eraKey];
       band.style.flexGrow = String(bookCount);
       band.dataset.eraKey = eraKey;
