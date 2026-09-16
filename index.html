@@ -1038,11 +1038,36 @@
   .tl-back[hidden]{ display:none; }
   .tl-back:hover{ border-color:var(--gold); color:var(--gold); }
 
-  .home{
+  .home, .landing{
     max-width:1360px;
     margin:0 auto;
     padding:24px 32px 60px;
   }
+  .landing-pitch{ max-width:68ch; margin:6px 0 8px; }
+  .landing-pitch p{
+    color:var(--ink-soft);
+    font-size:17px;
+    line-height:1.65;
+    margin:0 0 22px;
+  }
+  .landing-cta{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--gold);
+    color:#fff;
+    border:none;
+    border-radius:9px;
+    padding:12px 20px;
+    font-family:'Karla', sans-serif;
+    font-size:14.5px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .landing-cta:hover{ transform:translateY(-1px); }
+  .landing-cta svg{ flex:none; }
   .home-intro{ max-width:72ch; margin:0 0 24px; }
   .home-intro p{
     color:var(--ink-soft);
@@ -1868,7 +1893,7 @@
 <header class="top">
   <div class="top-inner">
     <div class="top-title-row">
-      <a class="brand-mark" href="#" id="brand-mark" title="Bible Cross-References &mdash; back to the timeline" aria-label="Bible Cross-References — back to the timeline">
+      <a class="brand-mark" href="#" id="brand-mark" title="Bible Cross-References &mdash; back to home" aria-label="Bible Cross-References — back to home">
         <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true">
           <rect x="1" y="1" width="38" height="38" rx="10" fill="var(--gold-tint)" stroke="var(--gold)" stroke-width="1.2"/>
           <path d="M20 14.5
@@ -1905,10 +1930,25 @@
   </div>
 </header>
 
-<section class="home" id="home-view">
+<section class="landing" id="landing-view" hidden>
+  <div class="landing-pitch">
+    <p>This site pairs two ways of studying Scripture: browse the whole Bible chronologically to see what era, king, or prophet surrounded any book, or open one of the six books written out in full to read it verse by verse alongside its cross-references and how four Christian traditions &mdash; Wesleyan, Reformed, Catholic, and Anabaptist &mdash; have read each passage.</p>
+    <button type="button" class="landing-cta" id="landing-cta">
+      Explore the Timeline
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+  <div class="book-index" id="book-index">
+    <p class="book-index-eyebrow">Index</p>
+    <h2>Every Book, By Genre</h2>
+    <p class="book-index-hint">Or jump straight to a book, grouped the way a study Bible's own contents page would &mdash; the Law, History, Wisdom, the Prophets, the Gospels, and the Epistles. Books in full (with cross-references and tradition notes) are marked with a dot; the rest open to their place on the timeline.</p>
+    <div class="book-index-grid" id="book-index-grid"></div>
+  </div>
+</section>
+
+<section class="home" id="home-view" hidden>
   <div class="home-intro">
-    <p class="home-pitch">This site pairs two ways of studying Scripture: browse the whole Bible chronologically below to see what era, king, or prophet surrounded any book, or open one of the six books written out in full to read it verse by verse alongside its cross-references and how four Christian traditions &mdash; Wesleyan, Reformed, Catholic, and Anabaptist &mdash; have read each passage.</p>
-    <p>Every book of the Bible, arranged by the era of history it belongs to &mdash; Old Testament flowing left to right, then New Testament continuing after the roughly four centuries of prophetic silence between the Testaments. Click any book to read it; use the filters to see which king, prophet, or figure was center stage at a given point in the story. Prefer a plain list? Jump to the <a href="#book-index" class="home-index-link">full book index</a> near the bottom of the page.</p>
+    <p>Every book of the Bible, arranged by the era of history it belongs to &mdash; Old Testament flowing left to right, then New Testament continuing after the roughly four centuries of prophetic silence between the Testaments. Click any book to read it; use the filters to see which king, prophet, or figure was center stage at a given point in the story.</p>
     <p class="fineprint">Dates are approximate and follow one widely used scholarly framework &mdash; several, especially the earliest Old Testament books and a handful of contested New Testament epistles, are genuinely disputed among scholars. Books marked with a dashed edge below have the most debated dating.</p>
   </div>
   <div class="ps-wrap">
@@ -1942,12 +1982,6 @@
     <div class="tl-hscroll-thumb" id="tl-hscroll-thumb"></div>
   </div>
   <div class="tl-detail" id="tl-detail"></div>
-  <div class="book-index" id="book-index">
-    <p class="book-index-eyebrow">Index</p>
-    <h2>Every Book, By Genre</h2>
-    <p class="book-index-hint">Jump straight to a book, grouped the way a study Bible's own contents page would &mdash; the Law, History, Wisdom, the Prophets, the Gospels, and the Epistles. Books in full (with cross-references and tradition notes) are marked with a dot; the rest open to their place on the timeline above.</p>
-    <div class="book-index-grid" id="book-index-grid"></div>
-  </div>
 </section>
 
 <div class="app" id="study-view">
@@ -9894,7 +9928,7 @@
     if (card) card.remove();
   }
 
-  let state = { view:"home", showYears:false, tlSelected:"judges", filtersOpen:false, filters:{ rulers:new Set(), prophets:new Set(), characters:new Set(), groups:new Set() }, book: "matthew", passageId: "genealogy", tradition: "wesleyan", translation: "web", navMode: "section", highlights: {}, selection: new Set(), font: "lora", spacing: "normal", readingWidth: READING_WIDTH_DEFAULT, xrefWidth: XREF_WIDTH_DEFAULT, theme: "light", notes: {} };
+  let state = { view:"landing", showYears:false, tlSelected:"judges", filtersOpen:false, filters:{ rulers:new Set(), prophets:new Set(), characters:new Set(), groups:new Set() }, book: "matthew", passageId: "genealogy", tradition: "wesleyan", translation: "web", navMode: "section", highlights: {}, selection: new Set(), font: "lora", spacing: "normal", readingWidth: READING_WIDTH_DEFAULT, xrefWidth: XREF_WIDTH_DEFAULT, theme: "light", notes: {} };
   let clearArmed = false;
   try{
     const savedTrad = localStorage.getItem("smcv-tradition");
@@ -10475,14 +10509,24 @@
     });
     syncHScrollThumb();
     renderRiver();
-    renderBookIndex();
   }
 
-  // The flat, genre-grouped index at the foot of the home page -- a quicker
-  // way to jump straight to a book than scrolling the chronological strip
-  // above. Same click/double-click behavior as a book tile in that strip:
-  // one click selects it (scrolling the detail panel into view), a double
-  // click on a fully-written book opens its study straight away.
+  // Lives on the landing page, one view over from the timeline strip whose
+  // book tiles this otherwise mirrors -- so a click here has to switch into
+  // the timeline first before selecting the book, rather than assuming it's
+  // already showing.
+  function openInTimeline(key){
+    state.view = "home";
+    try{ history.replaceState(null, "", location.pathname + location.search + "#timeline"); }catch(e){}
+    renderView();
+    selectTimelineBook(key);
+  }
+
+  // The flat, genre-grouped index on the landing page -- a quicker way to
+  // jump straight to a book than opening the chronological strip first.
+  // Same click/double-click behavior as a book tile in that strip: one
+  // click switches to the timeline with it selected, a double click on a
+  // fully-written book opens its study straight away.
   function renderBookIndex(){
     const grid = document.getElementById("book-index-grid");
     if (!grid) return;
@@ -10507,7 +10551,7 @@
       grid.appendChild(group);
     });
     grid.querySelectorAll(".book-index-item").forEach(btn => {
-      btn.addEventListener("click", () => selectTimelineBook(btn.getAttribute("data-book")));
+      btn.addEventListener("click", () => openInTimeline(btn.getAttribute("data-book")));
       btn.addEventListener("dblclick", () => openBookStudy(btn.getAttribute("data-book")));
     });
   }
@@ -10698,11 +10742,29 @@
   }
 
   function renderView(){
+    const landingEl = document.getElementById("landing-view");
     const homeEl = document.getElementById("home-view");
     const studyEl = document.getElementById("study-view");
     const backBtn = document.getElementById("tl-back-btn");
     const transNote = document.getElementById("translation-note");
-    if (state.view === "home"){
+    if (state.view === "landing"){
+      landingEl.hidden = false;
+      homeEl.hidden = true;
+      studyEl.hidden = true;
+      backBtn.hidden = true;
+      transNote.hidden = true;
+      document.getElementById("book-eyebrow").textContent = "Bible Cross-References";
+      document.getElementById("book-title").textContent = "Read Scripture In Its Own Time";
+      {
+        const doneBooks = BOOK_ORDER.filter(k => CONTENT_BOOKS.has(k)).map(k => BOOK_LABEL[k]);
+        const n = doneBooks.length;
+        const numberWord = {1:"one book",2:"two books",3:"three books",4:"four books",5:"five books",6:"six books"}[n] || (n + " books");
+        const isAre = n === 1 ? "is" : "are";
+        document.getElementById("book-desc").innerHTML = "A chronological timeline of all 66 books, and " + numberWord + " " + isAre + " open for deep study so far (" + joinWithAmpersand(doneBooks) + ").";
+      }
+      renderBookIndex();
+    } else if (state.view === "home"){
+      landingEl.hidden = true;
       homeEl.hidden = false;
       studyEl.hidden = true;
       backBtn.hidden = true;
@@ -10722,6 +10784,7 @@
       renderTimeline();
       renderDetail();
     } else {
+      landingEl.hidden = true;
       homeEl.hidden = true;
       studyEl.hidden = false;
       backBtn.hidden = false;
@@ -11345,8 +11408,15 @@
 
   document.getElementById("brand-mark").addEventListener("click", (e) => {
     e.preventDefault();
-    state.view = "home";
+    state.view = "landing";
     try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    renderView();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  document.getElementById("landing-cta").addEventListener("click", () => {
+    state.view = "home";
+    try{ history.replaceState(null, "", location.pathname + location.search + "#timeline"); }catch(e){}
     renderView();
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
@@ -11370,8 +11440,10 @@
       state.book = h;
       const firstInBook = PASSAGES.find(p => p.book === h);
       if (firstInBook) state.passageId = firstInBook.id;
-    } else if (!h) {
+    } else if (h === "timeline") {
       state.view = "home";
+    } else if (!h) {
+      state.view = "landing";
     }
     renderView();
   });
@@ -11383,8 +11455,10 @@
       state.book = h;
       const firstInBook = PASSAGES.find(p => p.book === h);
       if (firstInBook) state.passageId = firstInBook.id;
-    } else {
+    } else if (h === "timeline") {
       state.view = "home";
+    } else {
+      state.view = "landing";
     }
   })();
 
