@@ -10,6 +10,7 @@
   :root{
     --reading-font: 'Lora', Georgia, serif;
     --reading-width: 640px;
+    --xref-width: 380px;
     --reading-line-height: 1.6;
     --reading-word-spacing: 0;
     --reading-letter-spacing: normal;
@@ -671,10 +672,14 @@
      looks — it just adds a column beside it. */
   .study-split{
     display:grid;
-    grid-template-columns: auto minmax(260px, 380px);
+    grid-template-columns: auto minmax(260px, var(--xref-width));
     gap:22px;
     align-items:start;
   }
+  /* Wraps the cross-references panel together with its own resize handle,
+     mirroring .reading-frame's handle on the opposite edge — dragging left
+     widens the panel, dragging right narrows it. */
+  .xref-wrap{ position:relative; }
   /* The reading text now sits on its own visible "page" — a bordered,
      shadowed card distinct from the surrounding background — so the column
      you're resizing is unmistakable, and the handle has a real edge to sit
@@ -735,6 +740,41 @@
     color:var(--gold);
   }
   .reading-resizer svg{ width:13px; height:13px; }
+  /* Same handle, opposite side: sits just outside the panel's own left edge
+     (a sibling of the scrollable .panel, not a child of it, so it isn't
+     clipped by the panel's own overflow). */
+  .xref-resizer-track{
+    position:absolute;
+    top:0;
+    left:-11px;
+    width:22px;
+    height:100%;
+    pointer-events:none;
+  }
+  .xref-resizer{
+    position:sticky;
+    top:110px;
+    width:22px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:ew-resize;
+    touch-action:none;
+    background:var(--surface);
+    color:var(--ink-faint);
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:0;
+    box-shadow:var(--shadow);
+    pointer-events:auto;
+  }
+  .xref-resizer:hover, .xref-resizer:focus-visible{
+    border-color:var(--gold);
+    background:var(--gold-tint);
+    color:var(--gold);
+  }
+  .xref-resizer svg{ width:13px; height:13px; }
   .chapter-reading{ margin-bottom:0; }
   .chp-block{ scroll-margin-top:18px; }
   .chp-block:first-child .chp-heading{ padding-top:12px; }
@@ -1603,6 +1643,7 @@
        the controls for adjusting it. */
     .reading-frame{ max-width:none !important; }
     .reading-resizer-track, .reading-width-reset, .reading-width-hint{ display:none; }
+    .xref-resizer-track{ display:none; }
     .reading-frame{ padding:6px 20px 26px; }
     /* Bigger, easier-to-tap word and verse-number targets — small inline
        spans are hard to hit precisely with a finger, which was the main
@@ -1638,7 +1679,7 @@
   @media print{
     nav.rail, header.top, footer.site,
     .reading-toolbar, .hl-bar, .chp-hint, .chapter-actions,
-    .reading-resizer-track, .passage-study-head, .split,
+    .reading-resizer-track, .xref-resizer-track, .passage-study-head, .split,
     .study-split .panel{
       display:none !important;
     }
@@ -9207,6 +9248,7 @@
     document.documentElement.style.setProperty("--reading-letter-spacing", s.letterSpacing);
   }
   const READING_WIDTH_DEFAULT = 640;
+  const XREF_WIDTH_DEFAULT = 380;
   function applyFont(font){
     document.documentElement.style.setProperty("--reading-font", FONT_STACK[font] || FONT_STACK.lora);
   }
@@ -9680,7 +9722,7 @@
     if (card) card.remove();
   }
 
-  let state = { view:"home", showYears:false, tlSelected:"judges", filtersOpen:false, filters:{ rulers:new Set(), prophets:new Set(), characters:new Set(), groups:new Set() }, book: "matthew", passageId: "genealogy", tradition: "wesleyan", translation: "web", navMode: "section", highlights: {}, selection: new Set(), font: "lora", spacing: "normal", readingWidth: READING_WIDTH_DEFAULT, theme: "light", notes: {} };
+  let state = { view:"home", showYears:false, tlSelected:"judges", filtersOpen:false, filters:{ rulers:new Set(), prophets:new Set(), characters:new Set(), groups:new Set() }, book: "matthew", passageId: "genealogy", tradition: "wesleyan", translation: "web", navMode: "section", highlights: {}, selection: new Set(), font: "lora", spacing: "normal", readingWidth: READING_WIDTH_DEFAULT, xrefWidth: XREF_WIDTH_DEFAULT, theme: "light", notes: {} };
   let clearArmed = false;
   try{
     const savedTrad = localStorage.getItem("smcv-tradition");
@@ -9706,6 +9748,8 @@
     if (savedSpacing && SPACING_STYLE[savedSpacing]) state.spacing = savedSpacing;
     const savedWidth = parseInt(localStorage.getItem("smcv-readingwidth"), 10);
     if (!isNaN(savedWidth) && savedWidth >= 300 && savedWidth <= 900) state.readingWidth = savedWidth;
+    const savedXrefWidth = parseInt(localStorage.getItem("smcv-xrefwidth"), 10);
+    if (!isNaN(savedXrefWidth) && savedXrefWidth >= 260 && savedXrefWidth <= 480) state.xrefWidth = savedXrefWidth;
     const savedTheme = localStorage.getItem("smcv-theme");
     if (savedTheme === "light" || savedTheme === "dark") state.theme = savedTheme;
     const savedNotes = localStorage.getItem("smcv-notes");
@@ -9718,6 +9762,7 @@
   applySpacing(state.spacing);
   applyTheme(state.theme);
   document.documentElement.style.setProperty("--reading-width", state.readingWidth + "px");
+  document.documentElement.style.setProperty("--xref-width", state.xrefWidth + "px");
 
   function saveHighlights(){
     try{ localStorage.setItem("smcv-highlights", JSON.stringify(state.highlights)); } catch(e){}
@@ -9805,6 +9850,52 @@
   }, { passive:true });
   document.addEventListener("mouseup", () => { resizingWidth = false; });
   document.addEventListener("touchend", () => { resizingWidth = false; });
+
+  // Same idea as setReadingWidth/beginResizeWidth above, mirrored for the
+  // cross-references panel on the other side of the split. The handle sits
+  // on the panel's left edge, so dragging it left (negative dx) widens the
+  // panel and dragging it right narrows it — the opposite sign from the
+  // reading column's handle on its right edge.
+  function setXrefWidth(px){
+    const clamped = Math.max(260, Math.min(480, Math.round(px)));
+    state.xrefWidth = clamped;
+    document.documentElement.style.setProperty("--xref-width", clamped + "px");
+    try{ localStorage.setItem("smcv-xrefwidth", String(clamped)); } catch(e){}
+    const handle = document.getElementById("xref-resizer");
+    if (handle) handle.setAttribute("aria-valuenow", String(clamped));
+  }
+  let resizingXrefWidth = false, resizeStartXrefX = 0, resizeStartXrefWidth = XREF_WIDTH_DEFAULT;
+  function beginResizeXrefWidth(clientX){
+    resizingXrefWidth = true;
+    resizeStartXrefX = clientX;
+    resizeStartXrefWidth = state.xrefWidth;
+  }
+  function attachXrefControls(){
+    const handle = document.getElementById("xref-resizer");
+    if (!handle) return;
+    handle.addEventListener("mousedown", (e) => { e.preventDefault(); beginResizeXrefWidth(e.clientX); });
+    handle.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      if (t) beginResizeXrefWidth(t.clientX);
+    }, { passive:true });
+    handle.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft"){ setXrefWidth(state.xrefWidth + 24); e.preventDefault(); }
+      else if (e.key === "ArrowRight"){ setXrefWidth(state.xrefWidth - 24); e.preventDefault(); }
+    });
+    handle.addEventListener("dblclick", () => setXrefWidth(XREF_WIDTH_DEFAULT));
+  }
+  document.addEventListener("mousemove", (e) => {
+    if (!resizingXrefWidth) return;
+    setXrefWidth(resizeStartXrefWidth - (e.clientX - resizeStartXrefX));
+  });
+  document.addEventListener("touchmove", (e) => {
+    if (!resizingXrefWidth) return;
+    const t = e.touches[0];
+    if (!t) return;
+    setXrefWidth(resizeStartXrefWidth - (t.clientX - resizeStartXrefX));
+  }, { passive:true });
+  document.addEventListener("mouseup", () => { resizingXrefWidth = false; });
+  document.addEventListener("touchend", () => { resizingXrefWidth = false; });
 
   // Dragging a sticky note by its header. x is stored as a percentage of
   // the reading frame's width (so it keeps its relative spot if the frame
@@ -10717,9 +10808,16 @@
           '</div>' +
           '<div class="sticky-layer" id="sticky-layer"></div>' +
         '</div>' +
-        '<div class="panel">' +
-          '<h3>Cross-References</h3>' +
-          '<ul class="xref-list">' + xrefHTML(p) + '</ul>' +
+        '<div class="xref-wrap" id="xref-wrap">' +
+          '<div class="xref-resizer-track">' +
+            '<button type="button" class="xref-resizer" id="xref-resizer" role="slider" tabindex="0" aria-label="Drag to resize the cross-references panel width" aria-orientation="horizontal" aria-valuemin="260" aria-valuemax="480" aria-valuenow="' + state.xrefWidth + '" title="Drag to resize the cross-references panel width">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/><path d="M4 12h16"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<div class="panel">' +
+            '<h3>Cross-References</h3>' +
+            '<ul class="xref-list">' + xrefHTML(p) + '</ul>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="passage-study-head" id="passage-study-head">' +
@@ -10743,6 +10841,7 @@
     renderTradTabs(p);
     renderHlBar();
     attachReadingControls();
+    attachXrefControls();
     renderStickyNotes();
 
     const addNoteBtn = document.getElementById("add-note-btn");
