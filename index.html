@@ -11302,28 +11302,37 @@
     if (split) split.classList.remove("has-print-notes");
   });
 
-  // buildPrintMap() below creates a fresh <img> only once "beforeprint"
-  // fires, and the browser can start laying out the print output before
-  // that image has actually finished loading over the network -- the map
-  // then prints blank while text built the same way (no network fetch)
-  // shows up fine, which is exactly the "only the note shows" symptom.
-  // Fix: warm the browser's image cache well before print time (as soon as
-  // a book with a map is opened for reading) and, when "Print chapter" is
-  // clicked, wait for that load to actually finish before calling
-  // window.print() at all, so the <img> buildPrintMap creates is guaranteed
-  // to be a cache hit and paints synchronously.
-  const mapImageCache = {};
+  // buildPrintMap() below creates a fresh <img src="maps/....jpg"> only once
+  // "beforeprint" fires. A plain preload (warming the browser's normal image
+  // cache) turned out not to be reliable enough -- Chrome's print pipeline
+  // renders in a way that doesn't always treat that as a guaranteed
+  // synchronous cache hit, so the map still sometimes printed blank while
+  // the map notes (plain text, no image involved) printed fine. The robust
+  // fix is to remove the network dependency entirely: fetch each map once,
+  // convert it to a data: URI, and reuse that string for the <img src> at
+  // print time -- there is then no request of any kind left for the print
+  // pipeline to race against.
+  // mapImageDataUrlReady holds the plain resolved string once a fetch
+  // finishes (synchronously readable, for buildPrintMap to use at print
+  // time); mapImageDataUrlPromise holds the in-flight promise (for callers
+  // that need to await it, and to avoid double-fetching the same book).
+  const mapImageDataUrlReady = {};
+  const mapImageDataUrlPromise = {};
   function preloadMapImage(book){
     const map = BOOK_MAPS[book];
-    if (!map) return Promise.resolve();
-    if (mapImageCache[book]) return mapImageCache[book];
-    mapImageCache[book] = new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve();
-      img.onerror = () => resolve();
-      img.src = map.file;
-    });
-    return mapImageCache[book];
+    if (!map) return Promise.resolve(null);
+    if (mapImageDataUrlPromise[book]) return mapImageDataUrlPromise[book];
+    mapImageDataUrlPromise[book] = fetch(map.file)
+      .then(r => r.blob())
+      .then(blob => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      }))
+      .catch(() => null)
+      .then(dataUrl => { mapImageDataUrlReady[book] = dataUrl; return dataUrl; });
+    return mapImageDataUrlPromise[book];
   }
 
   // Same idea as buildPrintNotes, but for the book's map: rendered fresh
@@ -11340,11 +11349,15 @@
       '<path d="' + s.d + '" stroke="' + strokeColorHex(s.color) + '"></path>'
     ).join("");
     const notes = notesForMap(state.book).filter(n => n.text && n.text.trim());
+    // Falls back to the plain file path if the data URI somehow isn't ready
+    // yet (print triggered a moment after opening the chapter) -- still
+    // correct most of the time, just without the ironclad guarantee.
+    const imgSrc = mapImageDataUrlReady[state.book] || map.file;
     wrap.innerHTML =
       '<p class="print-map-title">Map — ' + escapeHtml(map.title) + '</p>' +
       '<p class="print-map-caption">Map: ' + escapeHtml(map.credit) + '</p>' +
       '<div class="print-map-svg-wrap">' +
-        '<img src="' + map.file + '" alt="' + escapeHtml(map.title) + '">' +
+        '<img src="' + imgSrc + '" alt="' + escapeHtml(map.title) + '">' +
         '<svg viewBox="' + MAP_DRAW_VIEWBOX + '" preserveAspectRatio="none" class="print-map-draw-overlay">' + strokesSVG + '</svg>' +
       '</div>' +
       (notes.length ?
