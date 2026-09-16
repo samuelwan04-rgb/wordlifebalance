@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bible Cross-References</title>
+<title>Word Life Balance</title>
 <!-- The open-book-in-balance mark used here matches #brand-mark in the
      header exactly, just with fixed hex colors baked in since a favicon
      can't read CSS custom properties. -->
@@ -1897,7 +1897,7 @@
 <header class="top">
   <div class="top-inner">
     <div class="top-title-row">
-      <a class="brand-mark" href="#" id="brand-mark" title="Bible Cross-References &mdash; back to home" aria-label="Bible Cross-References — back to home">
+      <a class="brand-mark" href="#" id="brand-mark" title="Word Life Balance &mdash; back to home" aria-label="Word Life Balance — back to home">
         <svg width="38" height="38" viewBox="0 0 40 40" aria-hidden="true">
           <rect x="1" y="1" width="38" height="38" rx="10" fill="var(--gold-tint)" stroke="var(--gold)" stroke-width="1.2"/>
           <path d="M20 14.5
@@ -1921,7 +1921,7 @@
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
           All books
         </button>
-        <p class="eyebrow" id="book-eyebrow">Cross-Reference Viewer &middot; Prototype</p>
+        <p class="eyebrow" id="book-eyebrow">Word Life Balance</p>
         <h1 id="book-title">The Gospel of Matthew</h1>
         <p id="book-desc">Read alongside its cross-references, outside commentary, and how a few Christian traditions &mdash; Wesleyan/Methodist among them &mdash; have read each passage. A work in progress: more books are being added over time.</p>
       </div>
@@ -10829,7 +10829,7 @@
     if (descEl) descEl.innerHTML = BOOK_DESC[state.book];
     if (eyebrowEl) {
       const written = BOOK_ORDER.filter(k => CONTENT_BOOKS.has(k)).map(k => BOOK_LABEL[k]);
-      eyebrowEl.textContent = "Cross-Reference Viewer · Prototype · " + joinWithAmpersand(written) + " complete so far";
+      eyebrowEl.textContent = "Word Life Balance · " + joinWithAmpersand(written) + " complete so far";
     }
   }
 
@@ -11274,7 +11274,7 @@
       studyEl.hidden = true;
       backBtn.hidden = true;
       transNote.hidden = true;
-      document.getElementById("book-eyebrow").textContent = "Bible Cross-References";
+      document.getElementById("book-eyebrow").textContent = "Word Life Balance";
       document.getElementById("book-title").textContent = "Read Scripture In Its Own Time";
       {
         const doneBooks = BOOK_ORDER.filter(k => CONTENT_BOOKS.has(k)).map(k => BOOK_LABEL[k]);
@@ -11290,7 +11290,7 @@
       studyEl.hidden = true;
       backBtn.hidden = true;
       transNote.hidden = true;
-      document.getElementById("book-eyebrow").textContent = "The Whole Story, In Order";
+      document.getElementById("book-eyebrow").textContent = "Word Life Balance · The Whole Story, In Order";
       document.getElementById("book-title").textContent = "Explore the Bible Timeline";
       {
         const doneBooks = BOOK_ORDER.filter(k => CONTENT_BOOKS.has(k)).map(k => BOOK_LABEL[k]);
