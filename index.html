@@ -612,43 +612,15 @@
     border-radius:10px;
     box-shadow:var(--shadow);
   }
-  .map-svg{ display:block; width:100%; height:auto; }
-  .map-sea{ fill:var(--accent-tint); }
-  .map-land{ fill:var(--gold-tint); stroke:var(--gold); stroke-width:1.4; stroke-linejoin:round; }
-  .map-region-label{
-    font-family:'Karla', sans-serif;
-    font-size:10.5px;
-    font-weight:700;
-    letter-spacing:.05em;
-    fill:var(--ink-soft);
-    text-transform:uppercase;
-  }
-  .map-water-label{
-    font-family:'Karla', sans-serif;
-    font-style:italic;
-    font-size:9.5px;
-    fill:var(--accent-strong);
-  }
-  .map-city circle{ fill:var(--gold); stroke:var(--surface); stroke-width:1.2; }
-  .map-city.major circle{ fill:var(--jesus); r:5.5; }
-  .map-city text{
-    font-family:'Karla', sans-serif;
-    font-size:10.5px;
-    font-weight:600;
-    fill:var(--ink);
-  }
-  .map-city.major text{ font-weight:700; }
-  .map-route path{ fill:none; stroke:var(--accent-strong); stroke-width:1.6; stroke-dasharray:5 5; }
-  .map-route marker path{ fill:var(--accent-strong); stroke:none; }
-  .map-route-label{
-    font-family:'Karla', sans-serif;
-    font-style:italic;
-    font-size:9.5px;
-    fill:var(--accent-strong);
-  }
-  .map-draw-layer{ position:absolute; inset:0; pointer-events:none; }
+  .map-img{ display:block; width:100%; height:auto; }
+  .map-modal-head p a{ color:inherit; }
+  .map-modal-head p a:hover{ color:var(--gold); }
+  /* The draw layer's viewBox is a fixed 0-1000 square regardless of the
+     photo's real aspect ratio (see MAP_DRAW_VIEWBOX) -- stroke-width is
+     tuned to that normalized space, not screen pixels. */
+  .map-draw-layer{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
   .map-draw-layer.drawing{ pointer-events:auto; cursor:crosshair; }
-  .map-draw-layer path{ fill:none; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+  .map-draw-layer path{ fill:none; stroke-width:6; stroke-linecap:round; stroke-linejoin:round; }
   .map-sticky-layer{ position:absolute; inset:0; pointer-events:none; }
   .map-notes-hint{ padding:0 22px 16px; font-size:12px; color:var(--ink-faint); }
 
@@ -2133,18 +2105,16 @@
       margin:0 0 14px;
     }
     .print-map-svg-wrap{
+      position:relative;
       border:1px solid #000;
       border-radius:4px;
       padding:12px;
       max-width:640px;
       margin:0 auto 18px;
     }
-    .print-map-svg-wrap .map-svg{ display:block; width:100%; height:auto; }
-    .print-map-svg-wrap .map-sea{ fill:#EAF2F5; }
-    .print-map-svg-wrap .map-land{ fill:#F6E9DE; stroke:#000; }
-    .print-map-svg-wrap .map-city circle{ fill:#000; stroke:#fff; }
-    .print-map-svg-wrap .map-route path{ stroke:#000; }
-    .print-map-svg-wrap .map-route marker path{ fill:#000; }
+    .print-map-svg-wrap img{ display:block; width:100%; height:auto; }
+    .print-map-draw-overlay{ position:absolute; inset:12px; width:calc(100% - 24px); height:calc(100% - 24px); }
+    .print-map-draw-overlay path{ fill:none; stroke-width:6; stroke-linecap:round; stroke-linejoin:round; }
     .print-map-notes-heading{
       font-size:11px;
       letter-spacing:.1em;
@@ -10360,242 +10330,69 @@
   }
 
   // ---------- Maps ----------
-  // Hand-authored schematic reference maps -- labeled, relatively-positioned
-  // diagrams for study purposes, not surveyed cartography. Each book that has
-  // one shows a "Map" button beside "Sticky note" / "Print chapter"; several
-  // books that share the same world (e.g. Romans & Ephesians both fall in
-  // Paul's Mediterranean) point at the same map id rather than duplicating it.
-  const MAPS = {
-    "canaan-tribes": {
-      title: "Canaan at the Time of the Judges",
-      caption: "Simplified schematic map for study reference — not to scale.",
-      viewBox: "0 0 380 520",
-      land: [
-        { d:"M100,20 C140,15 200,25 230,60 C255,90 260,140 250,190 C245,230 262,258 255,300 C250,340 232,380 222,420 C212,462 182,492 150,497 C120,500 90,482 75,452 C60,422 66,382 60,342 C55,302 71,270 65,230 C60,190 76,150 70,110 C67,80 76,45 100,20 Z", label:"", lx:0, ly:0 },
-        { d:"M270,150 C300,145 330,160 340,190 C350,220 345,260 330,290 C316,318 288,326 265,312 C250,300 255,270 258,240 C260,210 255,175 270,150 Z", label:"TRANSJORDAN\n(Reuben, Gad,\nE. Manasseh)", lx:300, ly:225 }
-      ],
-      water: [
-        { x:28, y:260, label:"Great Sea", rotate:-90 },
-        { x:246, y:105, label:"Sea of Galilee", rotate:0 },
-        { x:232, y:355, label:"Dead Sea", rotate:0 }
-      ],
-      regionLabels: [
-        { x:140, y:85, label:"GALILEE" },
-        { x:132, y:195, label:"EPHRAIM &\nMANASSEH" },
-        { x:150, y:340, label:"JUDAH" },
-        { x:78, y:265, label:"PHILISTIA" },
-        { x:118, y:430, label:"SIMEON /\nNEGEV" }
-      ],
-      cities: [
-        { x:150, y:45, label:"Dan (Laish)" },
-        { x:168, y:78, label:"Hazor" },
-        { x:150, y:210, label:"Shechem" },
-        { x:158, y:236, label:"Shiloh" },
-        { x:150, y:262, label:"Bethel" },
-        { x:181, y:246, label:"Bezek" },
-        { x:165, y:292, label:"Jerusalem (Jebus)", major:true },
-        { x:160, y:312, label:"Bethlehem" },
-        { x:150, y:346, label:"Hebron" },
-        { x:132, y:368, label:"Debir" },
-        { x:75, y:332, label:"Gaza" },
-        { x:66, y:305, label:"Ashkelon" },
-        { x:222, y:288, label:"Jericho", dx:10, dy:-6 },
-        { x:120, y:412, label:"Beersheba" }
-      ],
-      routes: [
-        { points:[[181,246],[165,292],[150,346],[132,368]], label:"Judah & Simeon's campaign (Judges 1)" }
-      ]
+  // Real, professionally-drawn reference maps rather than hand-sketched
+  // diagrams -- the "Biblica Open Bible Map" series (open.bible/resources/),
+  // released under CC BY-SA 4.0 and hosted on Wikimedia Commons. Each image
+  // was downloaded and re-compressed for the web (see maps/); credit is
+  // shown in the map modal and carried into print. Several books share
+  // conceptual ground but each still gets its own purpose-drawn map here.
+  const BOOK_MAPS = {
+    judges: {
+      file: "maps/judges-twelve-tribes.jpg",
+      title: "The Twelve Tribes of Israel",
+      credit: "Biblica, Inc. — CC BY-SA 4.0 — open.bible/resources",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Biblica_Open_Bible_Map_05_The_Twelve_Tribes_of_Israel.png"
     },
-    "israel-nt": {
-      title: "Israel in the Time of Jesus",
-      caption: "Simplified schematic map for study reference — not to scale.",
-      viewBox: "0 0 380 520",
-      land: [
-        { d:"M100,20 C140,15 200,25 230,60 C255,90 260,140 250,190 C245,230 262,258 255,300 C250,340 232,380 222,420 C212,462 182,492 150,497 C120,500 90,482 75,452 C60,422 66,382 60,342 C55,302 71,270 65,230 C60,190 76,150 70,110 C67,80 76,45 100,20 Z" },
-        { d:"M270,180 C300,175 330,195 338,225 C345,255 338,290 320,315 C304,336 278,332 262,312 C252,296 258,266 260,236 C262,210 258,195 270,180 Z", label:"DECAPOLIS /\nPEREA", lx:302, ly:255 }
-      ],
-      water: [
-        { x:28, y:260, label:"Great Sea", rotate:-90 },
-        { x:238, y:145, label:"Sea of Galilee", rotate:0 },
-        { x:232, y:355, label:"Dead Sea", rotate:0 }
-      ],
-      regionLabels: [
-        { x:140, y:100, label:"GALILEE" },
-        { x:128, y:220, label:"SAMARIA" },
-        { x:150, y:345, label:"JUDEA" }
-      ],
-      cities: [
-        { x:140, y:135, label:"Nazareth" },
-        { x:152, y:150, label:"Cana" },
-        { x:208, y:128, label:"Capernaum" },
-        { x:203, y:158, label:"Tiberias" },
-        { x:72, y:150, label:"Caesarea" },
-        { x:140, y:222, label:"Samaria" },
-        { x:151, y:232, label:"Sychar" },
-        { x:222, y:300, label:"Jericho", dx:10, dy:-6 },
-        { x:188, y:300, label:"Bethany" },
-        { x:140, y:296, label:"Emmaus" },
-        { x:165, y:298, label:"Jerusalem", major:true },
-        { x:160, y:320, label:"Bethlehem" },
-        { x:75, y:242, label:"Joppa" }
-      ],
-      routes: [
-        { points:[[140,135],[203,158],[222,300],[188,300],[165,298]], label:"A journey to Jerusalem" }
-      ]
+    matthew: {
+      file: "maps/matthew-ministry-of-jesus.jpg",
+      title: "The Ministry of Jesus",
+      credit: "Biblica, Inc. — CC BY-SA 4.0 — open.bible/resources",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Biblica_Open_Bible_Map_13_The_Ministry_of_Jesus.png"
     },
-    "judah-exile": {
-      title: "Judah, Jerusalem & the Exile to Babylon",
-      caption: "Simplified schematic map for study reference — not to scale.",
-      viewBox: "0 0 700 360",
-      land: [
-        { d:"M20,90 C60,75 130,80 155,110 C175,135 172,175 158,205 C145,232 105,248 65,240 C35,233 15,205 15,165 C15,135 10,105 20,90 Z", label:"JUDAH", lx:80, ly:160 },
-        { d:"M560,110 C610,95 665,105 685,140 C700,168 692,205 665,225 C638,244 590,242 565,218 C548,200 545,165 550,138 C553,125 555,116 560,110 Z", label:"BABYLONIA", lx:615, ly:230 }
-      ],
-      water: [
-        { x:590, y:170, label:"Euphrates" }
-      ],
-      regionLabels: [],
-      cities: [
-        { x:85, y:150, label:"Jerusalem", major:true },
-        { x:340, y:118, label:"Riblah" },
-        { x:610, y:175, label:"Babylon", major:true }
-      ],
-      routes: [
-        { points:[[85,150],[340,118],[610,175]], label:"Exile route to Babylon, 586 BC" }
-      ]
+    malachi: {
+      file: "maps/malachi-persian-empire.jpg",
+      title: "The Persian Empire, c. 450 BC",
+      credit: "Biblica, Inc. — CC BY-SA 4.0 — open.bible/resources",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Biblica_Open_Bible_Map_11_Persian_Empire_c450BC.png"
     },
-    "pauls-world": {
-      title: "The Eastern Mediterranean — Paul's World",
-      caption: "Simplified schematic map for study reference — not to scale.",
-      viewBox: "0 0 760 420",
-      land: [
-        { d:"M55,240 C85,225 120,235 132,265 C142,292 130,325 105,340 C82,353 55,342 45,315 C37,292 40,258 55,240 Z", label:"ITALY", lx:88, ly:300 },
-        { d:"M210,225 C245,212 285,222 300,250 C312,275 298,305 268,315 C240,324 208,310 198,285 C191,265 196,240 210,225 Z", label:"ACHAIA\n(GREECE)", lx:252, ly:275 },
-        { d:"M370,150 C420,130 490,138 530,165 C562,187 560,225 525,245 C485,266 420,262 385,238 C358,220 352,180 370,150 Z", label:"ASIA MINOR", lx:450, ly:200 },
-        { d:"M560,140 C600,125 645,135 660,165 C672,190 660,220 630,232 C602,243 570,232 558,208 C548,186 548,160 560,140 Z", label:"SYRIA", lx:610, ly:185 },
-        { d:"M555,235 C580,225 605,235 610,260 C614,282 600,305 578,310 C558,314 542,298 540,275 C539,258 545,244 555,235 Z", label:"JUDEA", lx:576, ly:275 }
-      ],
-      water: [
-        { x:300, y:340, label:"Mediterranean Sea" }
-      ],
-      regionLabels: [],
-      cities: [
-        { x:90, y:290, label:"Rome", major:true },
-        { x:255, y:270, label:"Corinth", major:true },
-        { x:280, y:245, label:"Athens" },
-        { x:285, y:190, label:"Thessalonica" },
-        { x:300, y:170, label:"Philippi" },
-        { x:440, y:210, label:"Ephesus", major:true },
-        { x:605, y:195, label:"Antioch" },
-        { x:576, y:280, label:"Jerusalem", major:true }
-      ],
-      routes: [
-        { points:[[576,280],[605,195],[440,210],[300,170],[255,270],[280,245],[90,290]], label:"Paul's journeys & letters, toward Rome (simplified)" }
-      ]
+    james: {
+      file: "maps/james-roman-empire-early-church.jpg",
+      title: "The Roman Empire & the Early Church",
+      credit: "Biblica, Inc. — CC BY-SA 4.0 — open.bible/resources",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Biblica_Open_Bible_Map_18_The_Roman_Empire_and_the_Early_Church.png"
     },
-    "jonah-world": {
-      title: "Jonah's Voyage — Nineveh, Joppa & Tarshish",
-      caption: "Simplified schematic map for study reference — not to scale.",
-      viewBox: "0 0 760 380",
-      land: [
-        { d:"M15,190 C45,175 85,182 100,210 C112,235 100,268 72,282 C48,294 20,280 12,254 C6,232 8,205 15,190 Z", label:"TARSHISH\n(the far west)", lx:56, ly:236 },
-        { d:"M380,120 C420,105 460,115 472,145 C482,172 468,205 438,220 C410,233 380,220 370,193 C362,170 366,140 380,120 Z", label:"ISRAEL", lx:420, ly:165 },
-        { d:"M620,100 C665,85 715,95 735,128 C752,158 738,195 700,212 C665,227 625,212 612,180 C602,155 605,120 620,100 Z", label:"ASSYRIA\n(Mesopotamia)", lx:673, ly:155 }
-      ],
-      water: [
-        { x:230, y:225, label:"Mediterranean Sea" }
-      ],
-      regionLabels: [],
-      cities: [
-        { x:410, y:150, label:"Gath-hepher" },
-        { x:430, y:190, label:"Joppa", major:true },
-        { x:685, y:160, label:"Nineveh", major:true }
-      ],
-      routes: [
-        { points:[[430,190],[240,190],[70,225]], label:"Attempted flight to Tarshish", dashed:"3 6" },
-        { points:[[430,190],[685,160]], label:"Eventual journey to Nineveh" }
-      ]
+    lamentations: {
+      file: "maps/lamentations-babylonian-empire.jpg",
+      title: "The Babylonian Empire, c. 600 BC",
+      credit: "Biblica, Inc. — CC BY-SA 4.0 — open.bible/resources",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Biblica_Open_Bible_Map_10_The_Babylonian_Empire_c600BC.png"
     },
-    "asia-minor-churches": {
-      title: "The Seven Churches of Asia Minor",
-      caption: "Simplified schematic map for study reference — not to scale.",
-      viewBox: "0 0 420 400",
-      land: [
-        { d:"M60,60 C110,45 170,55 210,90 C250,122 280,170 300,225 C315,265 305,310 270,335 C235,358 185,352 150,325 C120,302 108,265 95,230 C80,192 60,155 50,115 C44,92 48,72 60,60 Z" }
-      ],
-      water: [
-        { x:60, y:200, label:"Aegean Sea", rotate:-90 }
-      ],
-      regionLabels: [],
-      cities: [
-        { x:120, y:300, label:"Ephesus", major:true },
-        { x:105, y:210, label:"Smyrna", major:true },
-        { x:150, y:120, label:"Pergamum", major:true },
-        { x:225, y:150, label:"Thyatira", major:true },
-        { x:248, y:225, label:"Sardis", major:true },
-        { x:300, y:245, label:"Philadelphia", major:true },
-        { x:325, y:320, label:"Laodicea", major:true }
-      ],
-      routes: [
-        { points:[[120,300],[105,210],[150,120],[225,150],[248,225],[300,245],[325,320]], label:"The letter-carrying circuit (Revelation 1:11)" }
-      ]
+    romans: {
+      file: "maps/romans-places.jpg",
+      title: "Places Named in Romans",
+      credit: "Biblica, Inc. — CC BY-SA 4.0 — open.bible/resources",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Biblica_Open_Bible_Map_COLOR_44_Romans.png"
+    },
+    ephesians: {
+      file: "maps/ephesians-ephesus.jpg",
+      title: "Biblical Ephesus",
+      credit: "Biblica, Inc. — CC BY-SA 4.0 — open.bible/resources",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Biblica_Open_Bible_Map_COLOR_22_Ephesus.png"
+    },
+    jonah: {
+      file: "maps/jonah-assyrian-empire.jpg",
+      title: "The Assyrian Empire, c. 700 BC",
+      credit: "Biblica, Inc. — CC BY-SA 4.0 — open.bible/resources",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Biblica_Open_Bible_Map_09_The_Assyrian_Empire_c700BC.png"
+    },
+    revelation: {
+      file: "maps/revelation-seven-churches.jpg",
+      title: "The Seven Churches of Revelation",
+      credit: "Biblica, Inc. — CC BY-SA 4.0 — open.bible/resources",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Biblica_Open_Bible_Map_COLOR_53_Revelation.png"
     }
   };
-  const BOOK_MAPS = {
-    judges: "canaan-tribes",
-    matthew: "israel-nt",
-    malachi: "israel-nt",
-    james: "israel-nt",
-    lamentations: "judah-exile",
-    romans: "pauls-world",
-    ephesians: "pauls-world",
-    revelation: "asia-minor-churches",
-    jonah: "jonah-world"
-  };
-  function escapeMapText(s){
-    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  }
-  function mapMultilineTspans(x, label, lineHeight){
-    return label.split("\n").map((line, i) =>
-      '<tspan x="' + x + '" dy="' + (i === 0 ? 0 : lineHeight) + '">' + escapeMapText(line) + '</tspan>'
-    ).join("");
-  }
-  function renderMapSVG(map){
-    const land = (map.land || []).map(l =>
-      '<path class="map-land" d="' + l.d + '"></path>' +
-      (l.label ? '<text class="map-region-label" x="' + l.lx + '" y="' + l.ly + '" text-anchor="middle">' + mapMultilineTspans(l.lx, l.label, 12) + '</text>' : "")
-    ).join("");
-    const water = (map.water || []).map(w =>
-      '<text class="map-water-label" x="' + w.x + '" y="' + w.y + '"' +
-      (w.rotate ? ' transform="rotate(' + w.rotate + ' ' + w.x + ' ' + w.y + ')"' : "") +
-      ' text-anchor="middle">' + escapeMapText(w.label) + '</text>'
-    ).join("");
-    const regionLabels = (map.regionLabels || []).map(r =>
-      '<text class="map-region-label" x="' + r.x + '" y="' + r.y + '" text-anchor="middle">' + mapMultilineTspans(r.x, r.label, 12) + '</text>'
-    ).join("");
-    const routes = (map.routes || []).map(r => {
-      const d = r.points.map((p, i) => (i === 0 ? "M" : "L") + p[0] + " " + p[1]).join(" ");
-      const mid = r.points[Math.floor((r.points.length - 1) / 2)];
-      return '<g class="map-route">' +
-        '<path d="' + d + '" marker-end="url(#map-arrow)"' + (r.dashed ? ' stroke-dasharray="' + r.dashed + '"' : "") + '></path>' +
-        (r.label ? '<text class="map-route-label" x="' + mid[0] + '" y="' + (mid[1] - 8) + '" text-anchor="middle">' + escapeMapText(r.label) + '</text>' : "") +
-      '</g>';
-    }).join("");
-    const cities = (map.cities || []).map(c => {
-      const dx = c.dx !== undefined ? c.dx : 8;
-      const dy = c.dy !== undefined ? c.dy : 4;
-      const anchor = c.anchor || "start";
-      return '<g class="map-city' + (c.major ? " major" : "") + '">' +
-        '<circle cx="' + c.x + '" cy="' + c.y + '" r="' + (c.major ? 5.5 : 4) + '"></circle>' +
-        '<text x="' + (c.x + dx) + '" y="' + (c.y + dy) + '" text-anchor="' + anchor + '">' + escapeMapText(c.label) + '</text>' +
-      '</g>';
-    }).join("");
-    return '<svg viewBox="' + map.viewBox + '" class="map-svg" preserveAspectRatio="xMidYMid meet">' +
-      '<defs><marker id="map-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 Z"></path></marker></defs>' +
-      '<rect class="map-sea" x="0" y="0" width="100%" height="100%"></rect>' +
-      land + water + routes + cities +
-    '</svg>';
-  }
+
 
   // ---------- Bible-wide chronological timeline (home screen) ----------
   const CONTENT_BOOKS = new Set(["matthew","judges","malachi","lamentations","revelation","james","romans","ephesians","jonah"]);
@@ -11476,19 +11273,20 @@
   function buildPrintMap(){
     const wrap = document.getElementById("print-map");
     if (!wrap) return;
-    const mapId = BOOK_MAPS[state.book];
-    if (!mapId){ wrap.innerHTML = ""; return; }
-    const map = MAPS[mapId];
+    const map = BOOK_MAPS[state.book];
+    if (!map){ wrap.innerHTML = ""; return; }
     const strokes = drawingForMap(state.book);
     const strokesSVG = strokes.map(s =>
       '<path d="' + s.d + '" stroke="' + strokeColorHex(s.color) + '"></path>'
     ).join("");
-    const svgMarkup = renderMapSVG(map).replace("</svg>", strokesSVG + "</svg>");
     const notes = notesForMap(state.book).filter(n => n.text && n.text.trim());
     wrap.innerHTML =
       '<p class="print-map-title">Map — ' + escapeHtml(map.title) + '</p>' +
-      '<p class="print-map-caption">' + escapeHtml(map.caption) + '</p>' +
-      '<div class="print-map-svg-wrap">' + svgMarkup + '</div>' +
+      '<p class="print-map-caption">Map: ' + escapeHtml(map.credit) + '</p>' +
+      '<div class="print-map-svg-wrap">' +
+        '<img src="' + map.file + '" alt="' + escapeHtml(map.title) + '">' +
+        '<svg viewBox="' + MAP_DRAW_VIEWBOX + '" preserveAspectRatio="none" class="print-map-draw-overlay">' + strokesSVG + '</svg>' +
+      '</div>' +
       (notes.length ?
         '<p class="print-map-notes-heading">Map Notes</p>' +
         notes.map(n => '<div class="print-note-card" data-color="' + n.color + '">' + escapeHtml(n.text) + '</div>').join("")
@@ -11719,10 +11517,16 @@
     if (overlay) overlay.remove();
     mapDrawState = null;
   }
+  // Every map uses the same normalized 1000x1000 draw-layer viewBox
+  // regardless of the underlying image's real aspect ratio -- paired with
+  // preserveAspectRatio="none" and CSS sizing the SVG to exactly match the
+  // <img> box, a viewBox unit maps linearly onto the rendered image (via
+  // getScreenCTM in svgPointFromEvent), so strokes land under the cursor
+  // correctly without needing to know each image's pixel dimensions.
+  const MAP_DRAW_VIEWBOX = "0 0 1000 1000";
   function openMapModal(book){
-    const mapId = BOOK_MAPS[book];
-    if (!mapId) return;
-    const map = MAPS[mapId];
+    const map = BOOK_MAPS[book];
+    if (!map) return;
     closeMapModal();
 
     const overlay = document.createElement("div");
@@ -11738,7 +11542,7 @@
         '<div class="map-modal-head">' +
           '<div>' +
             '<h3>' + escapeHtml(map.title) + '</h3>' +
-            '<p>' + escapeHtml(map.caption) + '</p>' +
+            '<p>Map: <a href="' + map.creditUrl + '" target="_blank" rel="noopener">' + escapeHtml(map.credit) + '</a></p>' +
           '</div>' +
           '<button type="button" class="map-modal-close" id="map-modal-close" aria-label="Close map">' + CLOSE_ICON + '</button>' +
         '</div>' +
@@ -11753,8 +11557,8 @@
         '</div>' +
         '<div class="map-canvas-wrap">' +
           '<div class="map-canvas-inner" id="map-canvas-inner">' +
-            renderMapSVG(map) +
-            '<svg class="map-draw-layer" id="map-draw-svg" viewBox="' + map.viewBox + '" preserveAspectRatio="xMidYMid meet"></svg>' +
+            '<img class="map-img" src="' + map.file + '" alt="' + escapeHtml(map.title) + '">' +
+            '<svg class="map-draw-layer" id="map-draw-svg" viewBox="' + MAP_DRAW_VIEWBOX + '" preserveAspectRatio="none"></svg>' +
             '<div class="map-sticky-layer" id="map-sticky-layer"></div>' +
           '</div>' +
         '</div>' +

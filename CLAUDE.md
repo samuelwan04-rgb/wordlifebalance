@@ -18,10 +18,10 @@ The author (Sam) is a Methodist in Singapore, a beginner programmer working with
 
 ## Tech stack — read this before assuming a build step exists
 
-**There is no build system, no package.json, no dependencies, no framework, and no backend.** The entire app is one self-contained static HTML file (`index.html`) with inline `<style>` and `<script>` tags. It's roughly 10,700 lines / ~2MB, mostly because the full text of six Bible books in three translations is embedded directly in the file.
+**There is no build system, no package.json, no dependencies, no framework, and no backend.** The app is almost entirely one self-contained static HTML file (`index.html`) with inline `<style>` and `<script>` tags, plus a `maps/` folder of static JPEG images (see "Maps" below) — no other assets. `index.html` is roughly 12,000+ lines, mostly because the full text of nine Bible books in three translations is embedded directly in the file.
 
 - Plain vanilla JavaScript, wrapped in a single IIFE at the bottom of the file.
-- No `fetch`/`XMLHttpRequest`/API calls anywhere. Zero runtime API costs. The only external network request is a Google Fonts stylesheet `@import` (free, no auth).
+- No `fetch`/`XMLHttpRequest`/API calls anywhere at runtime. Zero runtime API costs. The only external network request is a Google Fonts stylesheet `@import` (free, no auth); map images are local files committed to the repo, not hotlinked.
 - State lives in one JS object (`state`) and a handful of module-level variables; the UI re-renders by rebuilding `innerHTML` strings (mostly `mainEl.innerHTML = '<div>...' + ... + '</div>'` string concatenation, not a templating library or virtual DOM).
 - Persistence is entirely `localStorage`, per browser/device — there is no shared database, no user accounts, no sync across devices. See "Persistence" below for the exact keys.
 - Deployed as a static site on **GitHub Pages** — already live (see the URL at the top of this file). No server, no environment variables, no secrets, no CI/CD pipeline beyond what Pages does automatically.
@@ -98,9 +98,14 @@ WEB (World English Bible) and KJV are public domain and fully embedded. ESV is e
 - **Tradition tabs**: "How Different Traditions Read It" — four tabs (Wesleyan/Reformed/Catholic/Anabaptist) below the reading column, per current passage.
 - **Commentary Elsewhere**: plain new-tab links to GotQuestions, Enduring Word, Desiring God, and Blue Letter Bible for the current passage. These are ordinary `<a target="_blank">` links — see below for why they aren't embedded inline.
 - **Sticky notes**: click "Sticky note" near the chapter title to drop a draggable, colored (yellow/pink/blue/green) note anywhere on the reading page. Notes are freeform-positioned (not tied to a specific verse), scoped per chapter (`book-chapter` key), saved to `localStorage` on every keystroke/drag/color change. See `buildStickyNoteEl`, `renderStickyNotes`, `addStickyNote`, and the drag handlers (`beginDragNote`/`updateDragNote`/`endDragNote`).
-- **Print chapter**: a "Print chapter" button calls `window.print()`; a `@media print` block hides all app chrome (nav, toolbars, side panels) and prints just the scripture text plus any sticky notes (notes swap from an editable `<textarea>` to a plain auto-height text block for printing, since a textarea only prints what fits its on-screen box).
+- **Print chapter**: a "Print chapter" button calls `window.print()`; a `@media print` block hides all app chrome (nav, toolbars, side panels) and prints just the scripture text plus any sticky notes (notes swap from an editable `<textarea>` to a plain auto-height text block for printing, since a textarea only prints what fits its on-screen box), plus the book's map (see below) below the text.
 - **Light/dark theme**: toggle in the header, persisted, plus `prefers-color-scheme` support when no explicit choice is made.
 - **Person search**: search Bible characters across the Home/Timeline data.
+- **Maps**: a "Map" button (beside "Sticky note" / "Print chapter") opens a modal showing a real reference map for the current book, from `BOOK_MAPS[book]` — see "Maps" below for the asset/license details. A freehand pen (SVG overlay, `state.mapDraw`, localStorage `smcv-mapdraw`) and sticky notes (reusing the chapter-notes component, keyed `map::<book>` in `state.notes`) both work on top of it, and both print.
+
+## Maps
+
+`maps/*.jpg` are the **"Biblica Open Bible Map"** series (Biblica, Inc. / Biblica Open Study Bible Resources), sourced from `https://open.bible/resources/` via Wikimedia Commons, licensed **CC BY-SA 4.0**. Each original PNG (several MB, up to 4000px) was downsized/re-compressed to a ~300KB JPEG (max 1400px) for web use — see `BOOK_MAPS` in `index.html` for the exact source file and Commons URL per book, which is also what's shown as the on-page credit. **Do not replace these with unlicensed images**, and if a book is added that needs a new map, look for another entry in the same Commons series first (search "Biblica Open Bible Map" on Wikimedia Commons) before sourcing elsewhere — keeping one consistent, pre-cleared source avoids a per-image licensing review each time.
 
 ## Things already tried and rejected (don't redo without a new reason)
 
@@ -116,7 +121,8 @@ WEB (World English Bible) and KJV are public domain and fully embedded. ESV is e
 | `smcv-translation` | last-selected translation |
 | `smcv-navmode` | "section" or "chapter" nav grouping in the sidebar |
 | `smcv-highlights` | word/verse highlight state (JSON) |
-| `smcv-notes` | all sticky notes, keyed by `book-chapter` (JSON) |
+| `smcv-notes` | all sticky notes, keyed by `book-chapter` (chapter notes) or `map::<book>` (map notes) (JSON) |
+| `smcv-mapdraw` | freehand pen strokes drawn on each book's map, keyed by book (JSON) |
 | `smcv-font` | reading font choice |
 | `smcv-spacing` | line-spacing preset |
 | `smcv-readingwidth` | dragged reading-column width in px |
