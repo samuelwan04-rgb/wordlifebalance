@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bible Cross-References</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Work+Sans:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;600;700;900&family=Karla:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
 
   :root{
     --reading-font: 'Lora', Georgia, serif;
@@ -14,27 +14,27 @@
     --reading-line-height: 1.6;
     --reading-word-spacing: 0;
     --reading-letter-spacing: normal;
-    --bg:#FAF7F7;
+    --bg:#F4EEDD;
     --surface:#FFFFFF;
-    --surface-2:#F4EDED;
-    --line:#E8DBDB;
-    --ink:#211F1F;
-    --ink-soft:#5C5252;
-    --ink-faint:#948A8A;
-    --accent:#2E4A73;
-    --accent-strong:#1D324F;
-    --accent-tint:#DEE5EE;
-    --gold:#B5504A;
-    --gold-tint:#F7E5E3;
-    --jesus:#9C2B2B;
+    --surface-2:#EEE3C4;
+    --line:#E1D2A4;
+    --ink:#241D15;
+    --ink-soft:#5B4E38;
+    --ink-faint:#948467;
+    --accent:#3C7C97;
+    --accent-strong:#2A5A70;
+    --accent-tint:#DCEBF0;
+    --gold:#C2543C;
+    --gold-tint:#F3DCD3;
+    --jesus:#8B2E2E;
     --wesleyan:#A6552E;
     --wesleyan-tint:#F2E1D6;
-    --reformed:#2E4A73;
-    --reformed-tint:#DEE5EE;
+    --reformed:#3C7C97;
+    --reformed-tint:#DCEBF0;
     --catholic:#6B4A7A;
     --catholic-tint:#E8DEEC;
-    --anabaptist:#3F6B49;
-    --anabaptist-tint:#DCE8DD;
+    --anabaptist:#5C7048;
+    --anabaptist-tint:#E1E8D6;
     --hl-blue:#BFD9F5;
     --hl-yellow:#F7E27A;
     --hl-orange:#F5C48A;
@@ -42,32 +42,32 @@
     --hl-green:#B9E3B9;
     --hl-gold:#E4C97A;
     --hl-grey:#D6D3CC;
-    --shadow: 0 1px 2px rgba(40,30,30,0.06), 0 8px 20px rgba(40,30,30,0.07);
-    --focus: #9C433C;
+    --shadow: 0 1px 2px rgba(36,29,21,0.07), 0 8px 20px rgba(36,29,21,0.08);
+    --focus: #B8402A;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#181B1F;
-      --surface:#212429;
-      --surface-2:#2A2D33;
-      --line:#3A3E46;
-      --ink:#E8E6DC;
-      --ink-soft:#B0AEA1;
-      --ink-faint:#7C7A70;
-      --accent:#8FA9C9;
-      --accent-strong:#C3D8E9;
-      --accent-tint:#26333E;
-      --gold:#D08880;
-      --gold-tint:#3A2624;
-      --jesus:#E08A85;
-      --wesleyan:#D89468;
-      --wesleyan-tint:#3D2E21;
-      --reformed:#8FA9C9;
-      --reformed-tint:#26333E;
+      --bg:#141C27;
+      --surface:#1D2733;
+      --surface-2:#232E3B;
+      --line:#34424F;
+      --ink:#F2EFE6;
+      --ink-soft:#B9C2CC;
+      --ink-faint:#7C8896;
+      --accent:#7FA8C2;
+      --accent-strong:#A9CBE0;
+      --accent-tint:#223140;
+      --gold:#D77A5E;
+      --gold-tint:#3A241D;
+      --jesus:#E08A75;
+      --wesleyan:#D79A45;
+      --wesleyan-tint:#3A2E17;
+      --reformed:#7FA8C2;
+      --reformed-tint:#223140;
       --catholic:#C2A2CE;
       --catholic-tint:#332A3A;
-      --anabaptist:#8FBF98;
-      --anabaptist-tint:#243824;
+      --anabaptist:#8EA873;
+      --anabaptist-tint:#26301E;
       --hl-blue:#2E4A66;
       --hl-yellow:#5C4E1E;
       --hl-orange:#5C3D22;
@@ -75,32 +75,32 @@
       --hl-green:#26502E;
       --hl-gold:#4F401E;
       --hl-grey:#48453D;
-      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 24px rgba(0,0,0,0.4);
-      --focus: #DE9C95;
+      --shadow: 0 1px 2px rgba(0,0,0,0.45), 0 12px 28px rgba(0,0,0,0.5);
+      --focus: #E08A75;
     }
   }
   :root[data-theme="dark"]{
-    --bg:#181B1F;
-    --surface:#212429;
-    --surface-2:#2A2D33;
-    --line:#3A3E46;
-    --ink:#E8E6DC;
-    --ink-soft:#B0AEA1;
-    --ink-faint:#7C7A70;
-    --accent:#8FA9C9;
-    --accent-strong:#C3D8E9;
-    --accent-tint:#26333E;
-    --gold:#D08880;
-    --gold-tint:#3A2624;
-    --jesus:#E08A85;
-    --wesleyan:#D89468;
-    --wesleyan-tint:#3D2E21;
-    --reformed:#8FA9C9;
-    --reformed-tint:#26333E;
+    --bg:#141C27;
+    --surface:#1D2733;
+    --surface-2:#232E3B;
+    --line:#34424F;
+    --ink:#F2EFE6;
+    --ink-soft:#B9C2CC;
+    --ink-faint:#7C8896;
+    --accent:#7FA8C2;
+    --accent-strong:#A9CBE0;
+    --accent-tint:#223140;
+    --gold:#D77A5E;
+    --gold-tint:#3A241D;
+    --jesus:#E08A75;
+    --wesleyan:#D79A45;
+    --wesleyan-tint:#3A2E17;
+    --reformed:#7FA8C2;
+    --reformed-tint:#223140;
     --catholic:#C2A2CE;
     --catholic-tint:#332A3A;
-    --anabaptist:#8FBF98;
-    --anabaptist-tint:#243824;
+    --anabaptist:#8EA873;
+    --anabaptist-tint:#26301E;
     --hl-blue:#2E4A66;
     --hl-yellow:#5C4E1E;
     --hl-orange:#5C3D22;
@@ -108,8 +108,8 @@
     --hl-green:#26502E;
     --hl-gold:#4F401E;
     --hl-grey:#48453D;
-    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 24px rgba(0,0,0,0.4);
-    --focus: #DE9C95;
+    --shadow: 0 1px 2px rgba(0,0,0,0.45), 0 12px 28px rgba(0,0,0,0.5);
+    --focus: #E08A75;
   }
 
   *{box-sizing:border-box;}
@@ -118,7 +118,7 @@
     margin:0;
     background:var(--bg);
     color:var(--ink);
-    font-family:'Work Sans', system-ui, sans-serif;
+    font-family:'Karla', system-ui, sans-serif;
     line-height:1.5;
   }
   ::selection{ background:var(--gold-tint); }
@@ -126,7 +126,7 @@
   button{ font-family:inherit; }
   :focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
 
-  .serif{ font-family:'Lora', Georgia, serif; }
+  .serif{ font-family:'Frank Ruhl Libre', Georgia, serif; }
 
   /* ---------- header ---------- */
   header.top{
@@ -167,7 +167,7 @@
     margin:0 0 6px;
   }
   .top-title-block h1{
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-weight:500;
     font-size:clamp(24px, 3vw, 32px);
     margin:0;
@@ -365,7 +365,7 @@
   .pbtn.active .ref{ color:var(--gold); }
   .pbtn .ttl{
     display:block;
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-size:15.5px;
     color:var(--ink);
   }
@@ -384,7 +384,7 @@
     font-weight:600;
   }
   .passage-head h2{
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-weight:500;
     font-size:clamp(22px,3vw,30px);
     margin:0 0 4px;
@@ -495,7 +495,7 @@
     resize:vertical;
     border:none;
     background:transparent;
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-size:13px;
     line-height:1.5;
     color:var(--ink);
@@ -522,9 +522,9 @@
     color:var(--ink);
   }
   .chp-verses p:last-child{ margin-bottom:0; }
-  .verse-linkout{ font-family:'Work Sans', sans-serif; }
+  .verse-linkout{ font-family:'Karla', sans-serif; }
   .verse-linkout-note{
-    font-family:'Work Sans', sans-serif !important;
+    font-family:'Karla', sans-serif !important;
     font-size:14.5px !important;
     line-height:1.6 !important;
     color:var(--ink-soft) !important;
@@ -552,14 +552,14 @@
   .verse-linkout-btn:hover{ background:var(--gold); color:var(--surface); }
   .verse-linkout-btn svg{ width:12px; height:12px; }
   .verse-linkout-credit{
-    font-family:'Work Sans', sans-serif !important;
+    font-family:'Karla', sans-serif !important;
     font-size:11.5px !important;
     color:var(--ink-faint) !important;
     margin:0 !important;
   }
   .jesus{ color:var(--jesus); }
   .vnum{
-    font-family:'Work Sans', sans-serif;
+    font-family:'Karla', sans-serif;
     font-weight:700;
     font-size:11px;
     color:var(--gold);
@@ -793,7 +793,7 @@
   }
   .chp-heading:hover .chp-heading-title{ color:var(--gold); }
   .chp-heading-ref{
-    font-family:'Work Sans', sans-serif;
+    font-family:'Karla', sans-serif;
     font-size:11px;
     letter-spacing:.08em;
     text-transform:uppercase;
@@ -826,7 +826,7 @@
     margin:0 0 6px;
   }
   .passage-study-head h3{
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-weight:500;
     font-size:clamp(19px,2.6vw,23px);
     margin:0 0 4px;
@@ -967,7 +967,7 @@
     margin-right:6px;
   }
   .trad-panel-label{
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-style:italic;
     font-size:14.5px;
     margin:0 0 8px;
@@ -1117,7 +1117,7 @@
     padding:11px 14px;
     margin-bottom:14px;
     color:var(--ink-soft);
-    font-family:'Work Sans', sans-serif;
+    font-family:'Karla', sans-serif;
     font-size:13px;
     font-weight:600;
     cursor:pointer;
@@ -1233,7 +1233,7 @@
   .tl-era.ot .tl-era-testament{ color:var(--gold); }
   .tl-era.nt .tl-era-testament{ color:var(--accent); }
   .tl-era-name{
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-weight:500;
     font-size:16.5px;
     margin:0 0 2px;
@@ -1281,7 +1281,7 @@
   .tl-book.uncertain{ border-left-style:dashed; }
   .tl-book .tl-book-name{
     display:inline-block;
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-size:14.5px;
     color:var(--ink);
   }
@@ -1341,7 +1341,7 @@
     margin:0 0 4px;
   }
   .tl-detail-title{
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-weight:500;
     font-size:clamp(21px,3vw,27px);
     margin:0;
@@ -1423,7 +1423,7 @@
     line-height:1.5;
   }
   .tl-intro-purpose{
-    font-family:'Lora', Georgia, serif;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
     font-size:15.5px;
     line-height:1.7;
     color:var(--ink);
@@ -1460,7 +1460,7 @@
   .ps-wrap{ margin:22px 0 26px; }
   .ps-label{
     display:block;
-    font-family:'Work Sans', sans-serif;
+    font-family:'Karla', sans-serif;
     font-size:10.5px;
     letter-spacing:.12em;
     text-transform:uppercase;
@@ -1488,7 +1488,7 @@
     border:1px solid var(--line);
     background:var(--surface);
     color:var(--ink);
-    font-family:'Work Sans', sans-serif;
+    font-family:'Karla', sans-serif;
     font-size:14.5px;
   }
   .ps-input:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-tint); }
@@ -1532,7 +1532,7 @@
     border-bottom:1px solid var(--line);
     background:none;
     color:var(--ink);
-    font-family:'Work Sans', sans-serif;
+    font-family:'Karla', sans-serif;
     font-size:13.5px;
     cursor:pointer;
   }
@@ -1561,7 +1561,7 @@
     background:var(--surface);
   }
   .ps-card-name{
-    font-family:'Lora', serif;
+    font-family:'Frank Ruhl Libre', serif;
     font-size:20px;
     font-weight:600;
     margin:0 0 4px;
@@ -1704,7 +1704,7 @@
       display:block;
       white-space:pre-wrap;
       padding:8px 12px 12px;
-      font-family:'Lora', Georgia, serif;
+      font-family:'Frank Ruhl Libre', Georgia, serif;
       font-size:12px;
       line-height:1.5;
       color:#000;
