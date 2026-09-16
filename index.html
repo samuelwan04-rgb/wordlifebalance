@@ -1871,55 +1871,78 @@
       --hl-pink:#F3C2DA; --hl-green:#B9E3B9; --hl-gold:#E4C97A; --hl-grey:#D6D3CC;
       --focus:#B8402A;
     }
+    @page{ margin:0.75in; }
     nav.rail, header.top, footer.site,
     .reading-toolbar, .hl-bar, .chp-hint, .chapter-actions,
     .reading-resizer-track, .xref-resizer-track, .passage-study-head, .split,
-    .study-split .panel, .sticky-layer{
+    .xref-wrap, .sticky-layer{
       display:none !important;
     }
+    /* Force plain black text everywhere in the printed area -- highlight
+       and note *backgrounds* still come through (those are separate
+       background-color rules below, untouched by this), only the text
+       color itself is pinned to black regardless of which accent color
+       (gold, jesus red-letter, tradition colors, etc.) an element would
+       normally use on screen. */
+    .study-split, .study-split *, .print-notes, .print-notes *{
+      color:#000 !important;
+    }
     .app{ display:block; max-width:none; background:#fff; }
-    main{ padding:0; background:#fff; }
+    main{ padding:32px 8px; background:#fff; }
+    /* .xref-wrap is hidden above, but it was still occupying a grid track
+       as an empty box (its only children, the resizer and cross-ref panel,
+       are display:none) -- with three grid items and only two columns,
+       the third (print-notes) wrapped onto its own row underneath the
+       reading column instead of sitting beside it. Removing it from the
+       layout (display:none, not just its contents) leaves exactly two
+       real grid items, so print-notes lands in the second column as
+       intended. */
     .study-split{
       display:grid !important;
       grid-template-columns:1fr;
-      gap:22px;
+      gap:28px;
       align-items:start;
     }
-    .study-split.has-print-notes{ grid-template-columns:1fr 200px; }
+    .study-split.has-print-notes{ grid-template-columns:1fr 220px; }
     .reading-frame{
       position:relative;
       max-width:none !important;
       border:none;
       box-shadow:none;
-      padding:0;
+      padding:0 12px;
     }
-    .print-notes{ display:block; }
+    .print-notes{ display:block; padding-top:2px; }
     .print-notes-heading{
       font-size:11px;
       letter-spacing:.08em;
       text-transform:uppercase;
       font-weight:700;
-      color:#000;
-      margin:0 0 10px;
-      padding-bottom:6px;
-      border-bottom:1px solid #000;
+      margin:0 0 14px;
+      padding-bottom:8px;
+      border-bottom:2px solid #000;
     }
+    /* Styled to actually read as a sticky note on paper -- a solid pastel
+       square, a touch of rotation, a soft shadow -- rather than a plain
+       bordered box, echoing the real thing on screen. */
     .print-note-card{
-      border:1px solid #999;
-      border-radius:4px;
-      padding:8px 10px;
-      margin-bottom:10px;
+      position:relative;
+      border:1px solid rgba(0,0,0,.15);
+      border-radius:2px;
+      padding:14px 16px;
+      margin:0 0 24px;
       font-family:var(--reading-font);
-      font-size:12px;
-      line-height:1.45;
-      color:#000;
+      font-size:12.5px;
+      line-height:1.5;
       white-space:pre-wrap;
       break-inside:avoid;
+      box-shadow:2px 3px 6px rgba(0,0,0,.18);
+      transform:rotate(-1deg);
     }
-    .print-note-card[data-color="yellow"]{ background:#FBF3D2; }
-    .print-note-card[data-color="pink"]{ background:#FBE4EE; }
-    .print-note-card[data-color="blue"]{ background:#E3EFFB; }
-    .print-note-card[data-color="green"]{ background:#E6F5E6; }
+    .print-note-card:nth-child(even){ transform:rotate(1deg); }
+    .print-note-card[data-color="yellow"]{ background:#F7E27A; }
+    .print-note-card[data-color="pink"]{ background:#F3C2DA; }
+    .print-note-card[data-color="blue"]{ background:#BFD9F5; }
+    .print-note-card[data-color="green"]{ background:#B9E3B9; }
   }
 </style>
 </head>
