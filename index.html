@@ -1173,6 +1173,62 @@
   .tl-chip:hover{ border-color:var(--gold); color:var(--gold); }
   .tl-chip.active{ background:var(--gold); border-color:var(--gold); color:#fff; }
 
+  /* The river: a compact colored index above the era strip, one band per
+     era (book-count-weighted, not date-weighted -- see renderRiver()),
+     narrowing to a thin sliver for the ~400 silent years between the
+     Testaments. Clicking a band scrolls the strip below to that era. */
+  .tl-river{
+    display:flex;
+    align-items:stretch;
+    height:64px;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    margin-bottom:10px;
+  }
+  .river-band{
+    position:relative;
+    flex:1 1 0;
+    min-width:10px;
+    border:none;
+    padding:0;
+    cursor:pointer;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    padding-bottom:8px;
+    opacity:.72;
+    transition:opacity .15s ease, flex-grow .2s ease;
+  }
+  .river-band:hover, .river-band:focus-visible, .river-band.active{ opacity:1; }
+  .river-band:focus-visible{ outline:2px solid var(--focus); outline-offset:-2px; }
+  .river-dot{
+    width:7px; height:7px; border-radius:50%;
+    background:#fff;
+    box-shadow:0 0 0 3px rgba(255,255,255,.22);
+    opacity:0;
+    transition:opacity .15s ease;
+  }
+  .river-band:hover .river-dot, .river-band:focus-visible .river-dot, .river-band.active .river-dot{ opacity:1; }
+  .river-gap{
+    flex:0 0 14px;
+    background:repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 3px, var(--line) 3px, var(--line) 6px);
+  }
+  .tl-river-caption{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin:0 0 16px;
+  }
+  .tl-river-caption strong{
+    font-family:'Frank Ruhl Libre', Georgia, serif;
+    font-weight:600;
+    color:var(--ink);
+    font-size:13.5px;
+  }
+  @media (max-width:860px){
+    .tl-river{ height:44px; }
+  }
+
   .tl-scroll{
     overflow-x:auto;
     overflow-y:hidden;
@@ -1790,6 +1846,8 @@
     <span id="tl-filters-toggle-label">Filter by king, prophet, or character</span>
   </button>
   <div class="tl-filters" id="tl-filters" hidden></div>
+  <div class="tl-river" id="tl-river"></div>
+  <p class="tl-river-caption" id="tl-river-caption"></p>
   <div class="tl-scroll" id="tl-scroll">
     <div class="tl-track" id="tl-track"></div>
   </div>
@@ -9511,6 +9569,18 @@
     "pauls-imprisonment":["Rome","Ephesus","Philippi","Colossae","Crete"],
     "johns-final-years":["Seven churches of Asia"]
   };
+  // One color per era, arcing from a warm dawn through the reds of the
+  // monarchy, cooling through exile, and renewing into the greens/blues of
+  // the New Testament — used only by the river strip above the timeline, so
+  // fixed hex values (not theme tokens) are fine: each band paints its own
+  // background regardless of light/dark mode.
+  const ERA_RIVER_COLOR = {
+    patriarchs:"#D79A45", "exodus-wilderness":"#CC8A3D", "conquest-judges":"#C2543C",
+    "united-monarchy":"#B14A42", "divided-kingdom":"#A8514A", "judah-alone":"#8C5240",
+    exile:"#5C7089", restoration:"#6B8A73",
+    "life-of-christ":"#E0B15C", "church-born":"#6E8A56", "pauls-journeys":"#4F8A72",
+    "pauls-imprisonment":"#3C7C97", "johns-final-years":"#4A5A8C"
+  };
   const FILTER_GROUPS = [
     { key:"rulers", label:"Kings & Rulers", options:["Pharaoh","Saul","David","Solomon","Rehoboam","Jeroboam I","Abijah","Asa","Nadab","Baasha","Elah","Zimri","Omri","Ahab","Jehoshaphat","Ahaziah of Israel","Jehoram of Israel","Jehoram of Judah","Ahaziah of Judah","Athaliah","Jehu","Joash of Judah","Jehoahaz of Israel","Jehoash of Israel","Amaziah","Jeroboam II","Uzziah","Zechariah (king of Israel)","Shallum","Menahem","Pekahiah","Pekah","Jotham","Ahaz","Hoshea","Hezekiah","Manasseh","Amon","Josiah","Jehoahaz of Judah","Jehoiakim","Jehoiachin","Zedekiah","Nebuchadnezzar","Belshazzar","Darius the Mede","Cyrus the Great","Darius I","Xerxes I","Artaxerxes I","Herod the Great","Caesar Augustus","Tiberius Caesar","Herod Antipas","Herod Agrippa I","Herod Agrippa II","Claudius","Pontius Pilate","Nero","Domitian"] },
     { key:"prophets", label:"Prophets", options:["Moses","Deborah","Samuel","Nathan","Elijah","Elisha","Isaiah","Jeremiah","Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah","Haggai","Zechariah","Malachi","John the Baptist","John of Patmos"] },
@@ -10268,6 +10338,7 @@
       const testament = ERA_TESTAMENT[eraKey];
       const era = document.createElement("div");
       era.className = "tl-era " + testament;
+      era.dataset.eraKey = eraKey;
       let html = '<p class="tl-era-testament">' + (testament === "ot" ? "Old Testament" : "New Testament") + '</p>' +
         '<h3 class="tl-era-name">' + ERA_LABEL[eraKey] + '</h3>' +
         '<p class="tl-era-years">' + ERA_YEARS[eraKey] + '</p>';
@@ -10301,6 +10372,58 @@
       btn.addEventListener("dblclick", () => openBookStudy(btn.getAttribute("data-book")));
     });
     syncHScrollThumb();
+    renderRiver();
+  }
+
+  // A compact visual index above the era strip: one colored band per era
+  // (a thin muted sliver for the intertestamental gap), sized by how many
+  // books it holds rather than by real elapsed years -- Genesis-to-Judges
+  // spans over a thousand years and Paul's letters just a few, so a
+  // date-accurate width would flatten the New Testament to a hairline.
+  // Clicking a band scrolls the era strip to it; hovering (or the era of
+  // whichever book is currently selected, by default) updates the caption.
+  function renderRiver(){
+    const river = document.getElementById("tl-river");
+    const caption = document.getElementById("tl-river-caption");
+    if (!river || !caption) return;
+    const selectedBook = BOOK_TIMELINE.find(b => b.key === state.tlSelected);
+    const defaultEra = selectedBook ? selectedBook.era : ERA_ORDER[0];
+    function paintCaption(eraKey){
+      const groups = ERA_GROUPS[eraKey];
+      caption.innerHTML = '<strong>' + ERA_LABEL[eraKey] + '</strong> &middot; ' + ERA_YEARS[eraKey] +
+        (groups && groups.length ? ' &middot; ' + groups.join(", ") : "");
+    }
+    river.innerHTML = "";
+    ERA_ORDER.forEach(eraKey => {
+      if (eraKey === "gap"){
+        const gap = document.createElement("div");
+        gap.className = "river-gap";
+        gap.title = ERA_YEARS.gap;
+        river.appendChild(gap);
+        return;
+      }
+      const bookCount = BOOK_TIMELINE.filter(b => b.era === eraKey).length;
+      if (!bookCount) return;
+      const band = document.createElement("button");
+      band.type = "button";
+      band.className = "river-band" + (eraKey === defaultEra ? " active" : "");
+      band.style.background = ERA_RIVER_COLOR[eraKey];
+      band.style.flexGrow = String(bookCount);
+      band.dataset.eraKey = eraKey;
+      band.setAttribute("aria-label", ERA_LABEL[eraKey] + ", " + ERA_YEARS[eraKey]);
+      band.innerHTML = '<span class="river-dot"></span>';
+      band.addEventListener("mouseenter", () => paintCaption(eraKey));
+      band.addEventListener("focus", () => paintCaption(eraKey));
+      band.addEventListener("mouseleave", () => paintCaption(defaultEra));
+      band.addEventListener("click", () => {
+        river.querySelectorAll(".river-band").forEach(b => b.classList.remove("active"));
+        band.classList.add("active");
+        const target = document.querySelector('.tl-era[data-era-key="' + eraKey + '"]');
+        if (target) target.scrollIntoView({ behavior:"smooth", inline:"start", block:"nearest" });
+      });
+      river.appendChild(band);
+    });
+    paintCaption(defaultEra);
   }
 
   // The timeline's real scroll container (.tl-scroll) hides its native
