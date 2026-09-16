@@ -1858,20 +1858,35 @@
      dedicated right-hand column instead — text stays on the left, notes
      sit beside it rather than over it. */
   @media print{
+    /* !important on every custom property here, not just specificity, because
+       the dark-theme rule (:root:not([data-theme="light"])) that sets these
+       same tokens for screen has HIGHER selector specificity than a plain
+       :root -- without !important, a device printing while in OS dark mode
+       would keep the dark (low-contrast) highlight/text colors instead of
+       these print-safe ones. */
     :root{
-      --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F2F2F2; --line:#DADADA;
-      --ink:#000000; --ink-soft:#333333; --ink-faint:#666666;
-      --accent:#3C7C97; --accent-strong:#2A5A70; --accent-tint:#DCEBF0;
-      --gold:#C2543C; --gold-tint:#F3DCD3; --jesus:#8B2E2E;
-      --wesleyan:#A6552E; --wesleyan-tint:#F2E1D6;
-      --reformed:#3C7C97; --reformed-tint:#DCEBF0;
-      --catholic:#6B4A7A; --catholic-tint:#E8DEEC;
-      --anabaptist:#5C7048; --anabaptist-tint:#E1E8D6;
-      --hl-blue:#BFD9F5; --hl-yellow:#F7E27A; --hl-orange:#F5C48A;
-      --hl-pink:#F3C2DA; --hl-green:#B9E3B9; --hl-gold:#E4C97A; --hl-grey:#D6D3CC;
-      --focus:#B8402A;
+      --bg:#FFFFFF !important; --surface:#FFFFFF !important; --surface-2:#F2F2F2 !important; --line:#DADADA !important;
+      --ink:#000000 !important; --ink-soft:#000000 !important; --ink-faint:#333333 !important;
+      --accent:#000000 !important; --accent-strong:#000000 !important; --accent-tint:#DCEBF0 !important;
+      --gold:#000000 !important; --gold-tint:#F3DCD3 !important; --jesus:#000000 !important;
+      --wesleyan:#000000 !important; --wesleyan-tint:#F2E1D6 !important;
+      --reformed:#000000 !important; --reformed-tint:#DCEBF0 !important;
+      --catholic:#000000 !important; --catholic-tint:#E8DEEC !important;
+      --anabaptist:#000000 !important; --anabaptist-tint:#E1E8D6 !important;
+      --hl-blue:#BFD9F5 !important; --hl-yellow:#F7E27A !important; --hl-orange:#F5C48A !important;
+      --hl-pink:#F3C2DA !important; --hl-green:#B9E3B9 !important; --hl-gold:#E4C97A !important; --hl-grey:#D6D3CC !important;
+      --focus:#000000 !important;
     }
     @page{ margin:0.75in; }
+    /* Browsers skip background-color on print unless told otherwise --
+       this is the actual cause of highlights and sticky-note colors not
+       showing up on paper. Forcing it here makes them print regardless
+       of the reader's own "Background graphics" print-dialog setting. */
+    *{
+      -webkit-print-color-adjust:exact !important;
+      print-color-adjust:exact !important;
+      color-adjust:exact !important;
+    }
     nav.rail, header.top, footer.site,
     .reading-toolbar, .hl-bar, .chp-hint, .chapter-actions,
     .reading-resizer-track, .xref-resizer-track, .passage-study-head, .split,
@@ -1883,12 +1898,14 @@
        background-color rules below, untouched by this), only the text
        color itself is pinned to black regardless of which accent color
        (gold, jesus red-letter, tradition colors, etc.) an element would
-       normally use on screen. */
+       normally use on screen. The --gold/--accent/--jesus/etc tokens above
+       are also pinned to black as a second layer, since several elements
+       (e.g. .chp-heading-ref) set color from those tokens directly. */
     .study-split, .study-split *, .print-notes, .print-notes *{
       color:#000 !important;
     }
     .app{ display:block; max-width:none; background:#fff; }
-    main{ padding:32px 8px; background:#fff; }
+    main{ padding:36px 10px; background:#fff; }
     /* .xref-wrap is hidden above, but it was still occupying a grid track
        as an empty box (its only children, the resizer and cross-ref panel,
        are display:none) -- with three grid items and only two columns,
@@ -1900,26 +1917,32 @@
     .study-split{
       display:grid !important;
       grid-template-columns:1fr;
-      gap:28px;
+      gap:0;
       align-items:start;
+      border:1.5px solid #000;
+      border-radius:3px;
+      padding:26px 30px;
     }
-    .study-split.has-print-notes{ grid-template-columns:1fr 220px; }
+    .study-split.has-print-notes{ grid-template-columns:1fr 210px; gap:0; }
     .reading-frame{
       position:relative;
       max-width:none !important;
       border:none;
       box-shadow:none;
-      padding:0 12px;
+      padding:0 28px 0 0;
     }
-    .print-notes{ display:block; padding-top:2px; }
+    .study-split.has-print-notes .reading-frame{
+      border-right:1px solid #000;
+    }
+    .print-notes{ display:block; padding:2px 0 0 26px; }
     .print-notes-heading{
       font-size:11px;
-      letter-spacing:.08em;
+      letter-spacing:.1em;
       text-transform:uppercase;
       font-weight:700;
-      margin:0 0 14px;
-      padding-bottom:8px;
-      border-bottom:2px solid #000;
+      margin:0 0 16px;
+      padding-bottom:10px;
+      border-bottom:1.5px solid #000;
     }
     /* Styled to actually read as a sticky note on paper -- a solid pastel
        square, a touch of rotation, a soft shadow -- rather than a plain
