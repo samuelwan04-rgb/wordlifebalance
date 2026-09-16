@@ -446,6 +446,11 @@
     inset:0;
     pointer-events:none;
   }
+  /* Built fresh from state.notes on "beforeprint" (see buildPrintNotes) and
+     cleared again on "afterprint" -- only ever visible in the print
+     stylesheet below, as a real right-hand column instead of the freeform
+     overlay .sticky-layer uses on screen. */
+  .print-notes{ display:none; }
   .sticky-note{
     position:absolute;
     width:180px;
@@ -507,11 +512,6 @@
     outline:none;
   }
   .sticky-note textarea::placeholder{ color:rgba(0,0,0,.35); }
-  /* Swapped in for the textarea only when printing (see @media print below) —
-     a textarea prints only what fits its on-screen box, silently clipping
-     longer notes, while this plain block grows to show the whole thing. */
-  .sticky-note-print-text{ display:none; }
-  .sticky-note-print-label{ display:none; }
 
   /* Verse paragraphs actually live inside .chp-verses (see chapterReadingHTML) —
      this is the selector that really applies to them. Font family and width
@@ -1845,18 +1845,47 @@
 
   /* ---------- print ---------- */
   /* "Print chapter" hands the whole thing to the browser's print dialog
-     rather than building a separate print view — this just strips the app
-     chrome down to the scripture text and any sticky notes on it. */
+     rather than building a separate print view. Two things a printed page
+     can't inherit from the on-screen one: dark mode (unreadable on paper,
+     and wastes ink even in light mode's own tinted background) and the
+     sticky notes' freeform, absolutely-positioned layout (which would
+     print sitting on top of the text, covering whatever's underneath).
+     Overriding every color token to a fixed, print-safe light palette
+     fixes the first for the whole page in one place, since every themed
+     rule already reads its color from these variables. The second is
+     fixed by hiding the live sticky-note layer and, on beforeprint (see
+     buildPrintNotes), filling in a plain list of the chapter's notes in a
+     dedicated right-hand column instead — text stays on the left, notes
+     sit beside it rather than over it. */
   @media print{
+    :root{
+      --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F2F2F2; --line:#DADADA;
+      --ink:#000000; --ink-soft:#333333; --ink-faint:#666666;
+      --accent:#3C7C97; --accent-strong:#2A5A70; --accent-tint:#DCEBF0;
+      --gold:#C2543C; --gold-tint:#F3DCD3; --jesus:#8B2E2E;
+      --wesleyan:#A6552E; --wesleyan-tint:#F2E1D6;
+      --reformed:#3C7C97; --reformed-tint:#DCEBF0;
+      --catholic:#6B4A7A; --catholic-tint:#E8DEEC;
+      --anabaptist:#5C7048; --anabaptist-tint:#E1E8D6;
+      --hl-blue:#BFD9F5; --hl-yellow:#F7E27A; --hl-orange:#F5C48A;
+      --hl-pink:#F3C2DA; --hl-green:#B9E3B9; --hl-gold:#E4C97A; --hl-grey:#D6D3CC;
+      --focus:#B8402A;
+    }
     nav.rail, header.top, footer.site,
     .reading-toolbar, .hl-bar, .chp-hint, .chapter-actions,
     .reading-resizer-track, .xref-resizer-track, .passage-study-head, .split,
-    .study-split .panel{
+    .study-split .panel, .sticky-layer{
       display:none !important;
     }
-    .app{ display:block; max-width:none; }
-    main{ padding:0; }
-    .study-split{ display:block; }
+    .app{ display:block; max-width:none; background:#fff; }
+    main{ padding:0; background:#fff; }
+    .study-split{
+      display:grid !important;
+      grid-template-columns:1fr;
+      gap:22px;
+      align-items:start;
+    }
+    .study-split.has-print-notes{ grid-template-columns:1fr 200px; }
     .reading-frame{
       position:relative;
       max-width:none !important;
@@ -1864,31 +1893,33 @@
       box-shadow:none;
       padding:0;
     }
-    .sticky-note{
-      box-shadow:none;
-      border:1px solid #888;
-      transform:none !important;
-    }
-    .sticky-note-head{ display:none; }
-    .sticky-note textarea{ display:none; }
-    .sticky-note-print-text{
-      display:block;
-      white-space:pre-wrap;
-      padding:8px 12px 12px;
-      font-family:'Frank Ruhl Libre', Georgia, serif;
-      font-size:12px;
-      line-height:1.5;
-      color:#000;
-    }
-    .sticky-note-print-label{
-      display:block;
-      margin:6px 12px 0;
-      font-size:9.5px;
+    .print-notes{ display:block; }
+    .print-notes-heading{
+      font-size:11px;
       letter-spacing:.08em;
       text-transform:uppercase;
       font-weight:700;
-      color:#555;
+      color:#000;
+      margin:0 0 10px;
+      padding-bottom:6px;
+      border-bottom:1px solid #000;
     }
+    .print-note-card{
+      border:1px solid #999;
+      border-radius:4px;
+      padding:8px 10px;
+      margin-bottom:10px;
+      font-family:var(--reading-font);
+      font-size:12px;
+      line-height:1.45;
+      color:#000;
+      white-space:pre-wrap;
+      break-inside:avoid;
+    }
+    .print-note-card[data-color="yellow"]{ background:#FBF3D2; }
+    .print-note-card[data-color="pink"]{ background:#FBE4EE; }
+    .print-note-card[data-color="blue"]{ background:#E3EFFB; }
+    .print-note-card[data-color="green"]{ background:#E6F5E6; }
   }
 </style>
 </head>
@@ -10728,19 +10759,8 @@
     textarea.placeholder = "Write a note…";
     textarea.spellcheck = false;
     textarea.value = note.text || "";
-    // Printing a <textarea> only shows what fits its on-screen box, so a
-    // plain text block stands in for it on paper (see the print-only CSS) —
-    // kept in sync here on every keystroke.
-    const printText = document.createElement("div");
-    printText.className = "sticky-note-print-text";
-    printText.textContent = note.text || "";
-    const printLabel = document.createElement("div");
-    printLabel.className = "sticky-note-print-label";
-    printLabel.textContent = "Note";
-
     textarea.addEventListener("input", () => {
       note.text = textarea.value;
-      printText.textContent = textarea.value;
       saveNotes();
     });
     // A click or drag to select text inside the note shouldn't also start a
@@ -10749,9 +10769,7 @@
     textarea.addEventListener("touchstart", (e) => e.stopPropagation(), { passive:true });
 
     el.appendChild(head);
-    el.appendChild(printLabel);
     el.appendChild(textarea);
-    el.appendChild(printText);
     return el;
   }
 
@@ -10773,6 +10791,36 @@
       stickyNotesWereSupported = nowSupported;
       renderStickyNotes();
     }
+  });
+
+  // The live sticky-note layer is absolutely positioned to sit freely over
+  // the reading text, which is exactly wrong for print -- printed notes
+  // would land wherever their screen coordinates happened to fall, on top
+  // of whatever verse was underneath. Built fresh into a real right-hand
+  // column right before printing (from state.notes, not by copying the live
+  // DOM, so it reflects the current text even mid-edit) and cleared right
+  // after, so it never lingers as duplicate, invisible content otherwise.
+  function buildPrintNotes(){
+    const wrap = document.getElementById("print-notes");
+    const split = document.getElementById("study-split");
+    if (!wrap || !split) return;
+    const p = PASSAGES.find(x => x.id === state.passageId);
+    const notes = p ? notesForChapter(p.book, p.chapter).filter(n => n.text && n.text.trim()) : [];
+    if (!notes.length){
+      wrap.innerHTML = "";
+      split.classList.remove("has-print-notes");
+      return;
+    }
+    split.classList.add("has-print-notes");
+    wrap.innerHTML = '<p class="print-notes-heading">Sticky Notes</p>' +
+      notes.map(n => '<div class="print-note-card" data-color="' + n.color + '">' + escapeHtml(n.text) + '</div>').join("");
+  }
+  window.addEventListener("beforeprint", buildPrintNotes);
+  window.addEventListener("afterprint", () => {
+    const wrap = document.getElementById("print-notes");
+    const split = document.getElementById("study-split");
+    if (wrap) wrap.innerHTML = "";
+    if (split) split.classList.remove("has-print-notes");
   });
 
   // Drops a new, empty note near the top-left of whatever part of the
@@ -11669,6 +11717,7 @@
             '<ul class="xref-list">' + xrefHTML(p) + '</ul>' +
           '</div>' +
         '</div>' +
+        '<div class="print-notes" id="print-notes"></div>' +
       '</div>' +
       '<div class="passage-study-head" id="passage-study-head">' +
         '<p class="crumb">Studying</p>' +
