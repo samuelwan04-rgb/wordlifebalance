@@ -1620,6 +1620,11 @@
        viewport just wastes screen space). */
     .study-split{ grid-template-columns: 1fr; }
     .study-split .panel{ position:static; max-height:none; }
+    /* Sticky notes are freeform-dragged and positioned in absolute pixels —
+       a note placed on a wide screen can end up off-screen or overlapping
+       other controls once the layout reflows this narrow, so the feature is
+       desktop/laptop-only rather than trying to reflow note positions too. */
+    #add-note-btn, .sticky-layer{ display:none !important; }
   }
 
   @media (prefers-reduced-motion: no-preference){
@@ -9720,6 +9725,13 @@
 
   // ---------- sticky notes ----------
   const NOTE_COLORS = ["yellow", "pink", "blue", "green"];
+  // Notes store freeform absolute pixel/percent positions, which only make
+  // sense on a screen wide enough to have room to drag them around — same
+  // breakpoint the rest of the layout switches to a stacked phone view at.
+  const STICKY_NOTES_MIN_WIDTH = 861;
+  function stickyNotesSupported(){
+    return window.matchMedia("(min-width: " + STICKY_NOTES_MIN_WIDTH + "px)").matches;
+  }
   function notesKeyFor(book, chapter){ return book + "-" + chapter; }
   function notesForChapter(book, chapter){
     const key = notesKeyFor(book, chapter);
@@ -9929,16 +9941,28 @@
     const layer = document.getElementById("sticky-layer");
     if (!layer) return;
     layer.innerHTML = "";
+    if (!stickyNotesSupported()) return;
     const p = PASSAGES.find(x => x.id === state.passageId);
     if (!p) return;
     notesForChapter(p.book, p.chapter).forEach(n => layer.appendChild(buildStickyNoteEl(n)));
   }
+  // Re-render if a laptop window is resized across the breakpoint, so notes
+  // appear/disappear immediately rather than only on the next chapter switch.
+  let stickyNotesWereSupported = stickyNotesSupported();
+  window.addEventListener("resize", () => {
+    const nowSupported = stickyNotesSupported();
+    if (nowSupported !== stickyNotesWereSupported){
+      stickyNotesWereSupported = nowSupported;
+      renderStickyNotes();
+    }
+  });
 
   // Drops a new, empty note near the top-left of whatever part of the
   // reading frame is currently scrolled into view, so it always appears
   // somewhere visible rather than off-screen — then hands it straight to
   // the keyboard to type into.
   function addStickyNote(){
+    if (!stickyNotesSupported()) return;
     const p = PASSAGES.find(x => x.id === state.passageId);
     const frame = document.getElementById("reading-frame");
     const layer = document.getElementById("sticky-layer");
