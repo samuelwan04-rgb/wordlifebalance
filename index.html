@@ -1035,6 +1035,7 @@
     border-radius:8px;
     cursor:pointer;
   }
+  .tl-back[hidden]{ display:none; }
   .tl-back:hover{ border-color:var(--gold); color:var(--gold); }
 
   .home{
@@ -1049,6 +1050,13 @@
     line-height:1.6;
     margin:0;
   }
+  .home-intro p + p{ margin-top:10px; }
+  .home-intro .home-pitch{
+    color:var(--ink);
+    font-size:15.5px;
+    line-height:1.6;
+  }
+  .home-index-link{ color:var(--gold); font-weight:600; text-decoration:underline; text-underline-offset:2px; }
   .home-intro .fineprint{
     color:var(--ink-faint);
     font-size:12px;
@@ -1666,6 +1674,76 @@
   .ps-book-pill:hover{ border-color:var(--gold); color:var(--gold); }
   .ps-book-pill.has-content{ border-color:var(--gold); color:var(--gold); font-weight:600; }
 
+  /* A flat, genre-grouped index at the foot of the page -- the same role a
+     study Bible's own contents page plays, and a quicker way to jump to a
+     specific book than scrolling the chronological strip above. */
+  .book-index{
+    margin-top:44px;
+    padding-top:28px;
+    border-top:1px solid var(--line);
+  }
+  .book-index-eyebrow{
+    font-size:11.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-weight:600;
+    margin:0 0 6px;
+  }
+  .book-index h2{
+    font-family:'Frank Ruhl Libre', Georgia, serif;
+    font-weight:600;
+    font-size:22px;
+    margin:2px 0 8px;
+  }
+  .book-index-hint{
+    color:var(--ink-soft);
+    font-size:13.5px;
+    line-height:1.55;
+    max-width:68ch;
+    margin:0 0 24px;
+  }
+  .book-index-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
+    gap:26px 22px;
+  }
+  .book-index-genre{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:0 0 8px;
+  }
+  .book-index-list{ display:flex; flex-direction:column; }
+  .book-index-item{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    width:100%;
+    text-align:left;
+    background:none;
+    border:none;
+    padding:4px 2px;
+    border-radius:5px;
+    font-family:'Frank Ruhl Libre', Georgia, serif;
+    font-size:14.5px;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .book-index-item:hover{ color:var(--gold); background:var(--surface-2); }
+  .book-index-item.has-content{ color:var(--ink); font-weight:600; }
+  .book-index-item.selected{ color:var(--gold); }
+  .book-index-item .idx-dot{
+    flex:none;
+    width:5px; height:5px;
+    border-radius:50%;
+    background:var(--gold);
+    opacity:0;
+  }
+  .book-index-item.has-content .idx-dot{ opacity:1; }
+
   @media (max-width: 860px){
     .app{ grid-template-columns: 1fr; }
     /* On a phone, the passage itself belongs first — the chapter/section
@@ -1829,7 +1907,8 @@
 
 <section class="home" id="home-view">
   <div class="home-intro">
-    <p>Every book of the Bible, arranged by the era of history it belongs to &mdash; Old Testament flowing left to right, then New Testament continuing after the roughly four centuries of prophetic silence between the Testaments. Click any book to read it; use the filters to see which king, prophet, or figure was center stage at a given point in the story.</p>
+    <p class="home-pitch">This site pairs two ways of studying Scripture: browse the whole Bible chronologically below to see what era, king, or prophet surrounded any book, or open one of the six books written out in full to read it verse by verse alongside its cross-references and how four Christian traditions &mdash; Wesleyan, Reformed, Catholic, and Anabaptist &mdash; have read each passage.</p>
+    <p>Every book of the Bible, arranged by the era of history it belongs to &mdash; Old Testament flowing left to right, then New Testament continuing after the roughly four centuries of prophetic silence between the Testaments. Click any book to read it; use the filters to see which king, prophet, or figure was center stage at a given point in the story. Prefer a plain list? Jump to the <a href="#book-index" class="home-index-link">full book index</a> near the bottom of the page.</p>
     <p class="fineprint">Dates are approximate and follow one widely used scholarly framework &mdash; several, especially the earliest Old Testament books and a handful of contested New Testament epistles, are genuinely disputed among scholars. Books marked with a dashed edge below have the most debated dating.</p>
   </div>
   <div class="ps-wrap">
@@ -1863,6 +1942,12 @@
     <div class="tl-hscroll-thumb" id="tl-hscroll-thumb"></div>
   </div>
   <div class="tl-detail" id="tl-detail"></div>
+  <div class="book-index" id="book-index">
+    <p class="book-index-eyebrow">Index</p>
+    <h2>Every Book, By Genre</h2>
+    <p class="book-index-hint">Jump straight to a book, grouped the way a study Bible's own contents page would &mdash; the Law, History, Wisdom, the Prophets, the Gospels, and the Epistles. Books in full (with cross-references and tradition notes) are marked with a dot; the rest open to their place on the timeline above.</p>
+    <div class="book-index-grid" id="book-index-grid"></div>
+  </div>
 </section>
 
 <div class="app" id="study-view">
@@ -9589,6 +9674,15 @@
     "life-of-christ":"#E0B15C", "church-born":"#6E8A56", "pauls-journeys":"#4F8A72",
     "pauls-imprisonment":"#3C7C97", "johns-final-years":"#4A5A8C"
   };
+  // Groups the book index the way a study Bible's own contents page would,
+  // reusing each book's existing `genre` tag rather than a second hand-kept
+  // list -- order here is display order, not a claim about the canon.
+  const GENRE_ORDER = ["Law","History","Wisdom","Major Prophet","Minor Prophet","Gospel","Pauline Epistle","General Epistle","Apocalyptic"];
+  const GENRE_LABEL = {
+    Law:"The Law", History:"History", Wisdom:"Wisdom & Poetry",
+    "Major Prophet":"Major Prophets", "Minor Prophet":"Minor Prophets", Gospel:"The Gospels",
+    "Pauline Epistle":"Paul's Letters", "General Epistle":"General Letters", Apocalyptic:"Apocalyptic"
+  };
   const FILTER_GROUPS = [
     { key:"rulers", label:"Kings & Rulers", options:["Pharaoh","Saul","David","Solomon","Rehoboam","Jeroboam I","Abijah","Asa","Nadab","Baasha","Elah","Zimri","Omri","Ahab","Jehoshaphat","Ahaziah of Israel","Jehoram of Israel","Jehoram of Judah","Ahaziah of Judah","Athaliah","Jehu","Joash of Judah","Jehoahaz of Israel","Jehoash of Israel","Amaziah","Jeroboam II","Uzziah","Zechariah (king of Israel)","Shallum","Menahem","Pekahiah","Pekah","Jotham","Ahaz","Hoshea","Hezekiah","Manasseh","Amon","Josiah","Jehoahaz of Judah","Jehoiakim","Jehoiachin","Zedekiah","Nebuchadnezzar","Belshazzar","Darius the Mede","Cyrus the Great","Darius I","Xerxes I","Artaxerxes I","Herod the Great","Caesar Augustus","Tiberius Caesar","Herod Antipas","Herod Agrippa I","Herod Agrippa II","Claudius","Pontius Pilate","Nero","Domitian"] },
     { key:"prophets", label:"Prophets", options:["Moses","Deborah","Samuel","Nathan","Elijah","Elisha","Isaiah","Jeremiah","Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah","Haggai","Zechariah","Malachi","John the Baptist","John of Patmos"] },
@@ -10381,6 +10475,41 @@
     });
     syncHScrollThumb();
     renderRiver();
+    renderBookIndex();
+  }
+
+  // The flat, genre-grouped index at the foot of the home page -- a quicker
+  // way to jump straight to a book than scrolling the chronological strip
+  // above. Same click/double-click behavior as a book tile in that strip:
+  // one click selects it (scrolling the detail panel into view), a double
+  // click on a fully-written book opens its study straight away.
+  function renderBookIndex(){
+    const grid = document.getElementById("book-index-grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    GENRE_ORDER.forEach(genre => {
+      const books = BOOK_TIMELINE.filter(b => b.genre === genre);
+      if (!books.length) return;
+      const group = document.createElement("div");
+      group.className = "book-index-group";
+      let html = '<p class="book-index-genre">' + GENRE_LABEL[genre] + '</p><div class="book-index-list">';
+      books.forEach(b => {
+        let cls = "book-index-item";
+        if (b.hasContent) cls += " has-content";
+        if (state.tlSelected === b.key) cls += " selected";
+        const hint = b.hasContent ? ' title="Double-click to open the full study"' : '';
+        html += '<button type="button" class="' + cls + '" data-book="' + b.key + '"' + hint + '>' +
+          '<span class="idx-dot"></span>' + b.name +
+          '</button>';
+      });
+      html += '</div>';
+      group.innerHTML = html;
+      grid.appendChild(group);
+    });
+    grid.querySelectorAll(".book-index-item").forEach(btn => {
+      btn.addEventListener("click", () => selectTimelineBook(btn.getAttribute("data-book")));
+      btn.addEventListener("dblclick", () => openBookStudy(btn.getAttribute("data-book")));
+    });
   }
 
   // A compact visual index above the era strip: one colored band per era
