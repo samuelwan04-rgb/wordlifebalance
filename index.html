@@ -2131,17 +2131,21 @@
       color:#333 !important;
       margin:0 0 14px;
     }
+    /* Annotations are baked directly into this <img> before printing (see
+       composeMapPrintImage) rather than overlaid as a separate positioned
+       element -- a real multi-page print job can paginate the long chapter
+       text above it such that an absolutely-positioned overlay doesn't
+       reliably travel with the image across a page break. One flattened
+       image sidesteps that entirely. */
     .print-map-svg-wrap{
-      position:relative;
       border:1px solid #000;
       border-radius:4px;
       padding:12px;
       max-width:640px;
       margin:0 auto 18px;
+      break-inside:avoid;
     }
     .print-map-svg-wrap img{ display:block; width:100%; height:auto; }
-    .print-map-draw-overlay{ position:absolute; inset:12px; width:calc(100% - 24px); height:calc(100% - 24px); }
-    .print-map-draw-overlay path{ fill:none; stroke-width:6; stroke-linecap:round; stroke-linejoin:round; }
     .print-map-notes-heading{
       font-size:11px;
       letter-spacing:.1em;
@@ -11335,6 +11339,55 @@
     return mapImageDataUrlPromise[book];
   }
 
+  // Annotations used to print as a separate <svg> absolutely positioned over
+  // the <img> -- correct on screen, but a real multi-page print job can
+  // paginate a long chapter's text such that this block's box gets split
+  // across a page break, and an absolutely-positioned overlay doesn't
+  // reliably travel with the image it's supposed to sit on across that
+  // break -- which is exactly what showed up as "annotations print below
+  // the map" instead of on it. Fixed by never printing two overlapping
+  // elements at all: bake the pen strokes directly into the map image
+  // itself with a <canvas> before printing, so there is only one flattened
+  // image, immune to any pagination quirk.
+  const mapComposedImageCache = {};
+  function composeMapPrintImage(book){
+    const map = BOOK_MAPS[book];
+    if (!map) return Promise.resolve(null);
+    return preloadMapImage(book).then(baseDataUrl => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const strokes = drawingForMap(book);
+          if (!strokes.length){
+            mapComposedImageCache[book] = baseDataUrl || map.file;
+            resolve(mapComposedImageCache[book]);
+            return;
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          // Strokes were captured in a normalized 0-1000 viewBox regardless
+          // of the image's real pixel size (see MAP_DRAW_VIEWBOX) -- scale
+          // that space onto this canvas's actual pixel dimensions.
+          ctx.scale(canvas.width / 1000, canvas.height / 1000);
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.lineWidth = 6;
+          strokes.forEach(s => {
+            ctx.strokeStyle = strokeColorHex(s.color);
+            ctx.stroke(new Path2D(s.d));
+          });
+          mapComposedImageCache[book] = canvas.toDataURL("image/jpeg", 0.92);
+          resolve(mapComposedImageCache[book]);
+        };
+        img.onerror = () => { mapComposedImageCache[book] = map.file; resolve(map.file); };
+        img.src = baseDataUrl || map.file;
+      });
+    });
+  }
+
   // Same idea as buildPrintNotes, but for the book's map: rendered fresh
   // into #print-map right below .study-split so it prints under the
   // scripture text, carrying over any freehand annotation plus any notes
@@ -11344,21 +11397,16 @@
     if (!wrap) return;
     const map = BOOK_MAPS[state.book];
     if (!map){ wrap.innerHTML = ""; return; }
-    const strokes = drawingForMap(state.book);
-    const strokesSVG = strokes.map(s =>
-      '<path d="' + s.d + '" stroke="' + strokeColorHex(s.color) + '"></path>'
-    ).join("");
     const notes = notesForMap(state.book).filter(n => n.text && n.text.trim());
-    // Falls back to the plain file path if the data URI somehow isn't ready
-    // yet (print triggered a moment after opening the chapter) -- still
-    // correct most of the time, just without the ironclad guarantee.
-    const imgSrc = mapImageDataUrlReady[state.book] || map.file;
+    // Falls back to the plain file path if the composed image somehow isn't
+    // ready yet (print triggered a moment after opening the chapter) --
+    // still correct most of the time, just without annotations baked in.
+    const imgSrc = mapComposedImageCache[state.book] || mapImageDataUrlReady[state.book] || map.file;
     wrap.innerHTML =
       '<p class="print-map-title">Map — ' + escapeHtml(map.title) + '</p>' +
       '<p class="print-map-caption">Map: ' + escapeHtml(map.credit) + '</p>' +
       '<div class="print-map-svg-wrap">' +
         '<img src="' + imgSrc + '" alt="' + escapeHtml(map.title) + '">' +
-        '<svg viewBox="' + MAP_DRAW_VIEWBOX + '" preserveAspectRatio="none" class="print-map-draw-overlay">' + strokesSVG + '</svg>' +
       '</div>' +
       (notes.length ?
         '<p class="print-map-notes-heading">Map Notes</p>' +
@@ -11572,14 +11620,20 @@
     if (!mapDrawState) return;
     const pathEl = document.getElementById("map-stroke-live");
     if (pathEl) pathEl.removeAttribute("id");
-    drawingForMap(mapDrawState.book).push({ color: mapDrawState.color, d: mapDrawState.d });
+    const book = mapDrawState.book;
+    drawingForMap(book).push({ color: mapDrawState.color, d: mapDrawState.d });
     saveMapDraw();
     mapDrawState = null;
+    // Keep the flattened print image in step with each new stroke, so it's
+    // already up to date if print is triggered via Cmd/Ctrl+P rather than
+    // the "Print chapter" button (which also awaits this directly).
+    composeMapPrintImage(book);
   }
   function clearMapDrawing(book){
     state.mapDraw[book] = [];
     saveMapDraw();
     renderMapDrawing(book);
+    composeMapPrintImage(book);
   }
 
   const MAP_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 3L3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg>';
@@ -12490,7 +12544,7 @@
     const lastVerses = chapterList[chapterList.length - 1].verses.web;
     const lastV = lastVerses[lastVerses.length - 1][0];
     const chapterRef = CHAPTER_LABEL[p.book][p.chapter] + ":" + firstV + "–" + lastV;
-    preloadMapImage(p.book);
+    composeMapPrintImage(p.book);
 
     mainEl.innerHTML =
       '<div class="passage-head">' +
@@ -12579,7 +12633,7 @@
     const addNoteBtn = document.getElementById("add-note-btn");
     if (addNoteBtn) addNoteBtn.addEventListener("click", addStickyNote);
     const printBtn = document.getElementById("print-chapter-btn");
-    if (printBtn) printBtn.addEventListener("click", () => { preloadMapImage(p.book).then(() => window.print()); });
+    if (printBtn) printBtn.addEventListener("click", () => { composeMapPrintImage(p.book).then(() => window.print()); });
     const openMapBtn = document.getElementById("open-map-btn");
     if (openMapBtn) openMapBtn.addEventListener("click", () => openMapModal(p.book));
 
